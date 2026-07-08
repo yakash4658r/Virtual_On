@@ -1,0 +1,113 @@
+/* ============================================
+   PREMIUM DATA TABLE
+   ============================================ */
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #EEEEEE;
+  border-radius: 12px;
+  background: #FFFFFF;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  background: #FAFAFA;
+  color: #888888;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 14px 16px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 2px solid #EEEEEE;
+  user-select: none;
+}
+
+.data-table th.sortable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.data-table th.sortable:hover {
+  color: #000000;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #000000;
+}
+
+.data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #F5F5F5;
+  color: #333333;
+  font-size: 0.88rem;
+}
+
+/* Zebra striping */
+.data-table tbody tr:nth-child(even) {
+  background: #FCFCFC;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: #F8F8F8;
+}
+
+.data-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+.data-table tbody tr.selected {
+  background: #F0F0F0;
+}
+
+/* Checkbox column */
+.table-checkbox-col {
+  width: 40px;
+  text-align: center;
+}
+
+.table-checkbox-col input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #000000;
+}
+
+/* Bulk actions bar */
+.table-bulk-bar {
+  padding: 10px 16px;
+  background: #F5F5F5;
+  border-bottom: 1px solid #EEEEEE;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* Empty state */
+.table-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: #AAAAAA;
+  background: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}

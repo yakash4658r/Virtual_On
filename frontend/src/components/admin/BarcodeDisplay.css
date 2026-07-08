@@ -1,0 +1,52 @@
+.barcode-display {
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.barcode-img {
+  max-width: 100%;
+  height: auto;
+  max-height: 120px;
+}
+
+.barcode-text-only {
+  padding: 20px;
+}
+
+.barcode-code {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 700;
+}
+
+.barcode-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
+.barcode-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.barcode-print-btn {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: #333;
+}
+
+.barcode-print-btn:hover {
+  background: #f0f0f0;
+}

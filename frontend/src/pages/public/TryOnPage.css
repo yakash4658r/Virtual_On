@@ -1,0 +1,72 @@
+.tryon-page {
+  padding: 20px 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.tryon-selected {
+  margin-bottom: 30px;
+}
+
+.tryon-selected h3 {
+  color: var(--text-light);
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.tryon-slots-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* Method toggle */
+.input-method-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.method-btn {
+  padding: 10px 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.method-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.method-btn:hover:not(.active) {
+  color: var(--text-white);
+}
+
+/* Photo section */
+.tryon-photo-section {
+  margin-bottom: 30px;
+}
+
+/* Start section */
+.tryon-start-section {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.tryon-time-estimate {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 12px;
+}

@@ -1,0 +1,71 @@
+.image-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.uploader-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.uploader-label .required {
+  color: var(--error);
+}
+
+.uploader-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-dark);
+}
+
+.uploader-dropzone:hover {
+  border-color: var(--primary-light);
+  background: rgba(139, 26, 74, 0.08);
+}
+
+.uploader-icon {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.uploader-dropzone p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.uploader-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.uploader-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+}
+
+.uploader-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--error);
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}

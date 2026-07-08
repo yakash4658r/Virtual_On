@@ -1,0 +1,149 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #000000;
+  --primary-light: #333333;
+  --secondary: #555555;
+  --bg-dark: #FFFFFF;
+  --bg-card: #F9F9F9;
+  --text-white: #000000;
+  --text-light: #222222;
+  --text-muted: #666666;
+  --success: #4CAF50;
+  --error: #F44336;
+  --warning: #FF9800;
+  --border: #E0E0E0;
+}
+
+body {
+  font-family: 'Hello', sans-serif !important;
+  background-color: var(--bg-dark);
+  color: var(--text-white);
+  min-height: 100vh;
+}
+
+.main-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px 30px;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-white);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-light);
+}
+
+.form-input::placeholder { color: #999999; }
+
+.form-error {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Card */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+.card:hover {
+  border-color: var(--primary-light);
+}
+
+/* Section heading */
+.section-title {
+  color: var(--secondary);
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin-bottom: 30px;
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.status-badge.pending { background: #FF9800; color: #000; }
+.status-badge.processing { background: #2196F3; color: #fff; }
+.status-badge.completed { background: #4CAF50; color: #fff; }
+.status-badge.failed { background: #F44336; color: #fff; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+.empty-state-text {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content { padding: 15px; }
+  .form-row { grid-template-columns: 1fr; }
+}

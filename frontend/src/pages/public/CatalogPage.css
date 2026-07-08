@@ -1,0 +1,15 @@
+.catalog-page {
+  padding: 20px 0;
+}
+
+.catalog-header {
+  margin-bottom: 10px;
+}
+
+.catalog-controls {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}

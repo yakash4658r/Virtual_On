@@ -1,0 +1,115 @@
+.camera-capture {
+  width: 100%;
+}
+
+.camera-start {
+  text-align: center;
+  padding: 50px 30px;
+  background: var(--bg-card);
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+}
+
+.camera-start-icon { font-size: 3.5rem; margin-bottom: 16px; }
+.camera-start h3 { color: var(--text-white); margin-bottom: 8px; }
+.camera-start p { color: var(--text-muted); font-size: 0.95rem; }
+
+.camera-error {
+  color: var(--error);
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+
+/* Live camera */
+.camera-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.camera-viewport {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid var(--primary-light);
+}
+
+.camera-video {
+  width: 400px;
+  height: 530px;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1);
+}
+
+.camera-guide {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.guide-outline {
+  width: 180px;
+  height: 280px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 90px 90px 50px 50px;
+}
+
+.camera-countdown {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 7rem;
+  font-weight: 800;
+  color: var(--secondary);
+  text-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+  animation: countPulse 1s ease;
+}
+
+@keyframes countPulse {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.camera-tip {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 12px;
+}
+
+/* Captured result */
+.camera-result {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.captured-image {
+  width: 250px;
+  height: 350px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 2px solid var(--success);
+}
+
+.camera-result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 500px) {
+  .camera-video { width: 100%; height: auto; }
+  .camera-result { flex-direction: column; align-items: center; }
+  .captured-image { width: 200px; height: 280px; }
+}

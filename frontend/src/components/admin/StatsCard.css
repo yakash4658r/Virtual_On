@@ -1,0 +1,105 @@
+/* ============================================
+   PREMIUM STATS CARD
+   ============================================ */
+
+.stats-card {
+  background: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-left: 4px solid #000000;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(0,0,0,0.02) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(20px, -20px);
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: #DDDDDD;
+}
+
+/* Color accents */
+.stats-primary { border-left-color: #000000; }
+.stats-success { border-left-color: #2E7D32; }
+.stats-warning { border-left-color: #E65100; }
+.stats-info { border-left-color: #1565C0; }
+.stats-danger { border-left-color: #C62828; }
+
+.stats-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.stats-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: #F5F5F5;
+  color: #333333;
+}
+
+.stats-primary .stats-icon-wrapper { background: #F0F0F0; color: #000; }
+.stats-success .stats-icon-wrapper { background: #E8F5E9; color: #2E7D32; }
+.stats-warning .stats-icon-wrapper { background: #FFF3E0; color: #E65100; }
+.stats-info .stats-icon-wrapper { background: #E3F2FD; color: #1565C0; }
+.stats-danger .stats-icon-wrapper { background: #FFEBEE; color: #C62828; }
+
+.stats-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 20px;
+}
+
+.stats-trend-up {
+  color: #2E7D32;
+  background: #E8F5E9;
+}
+
+.stats-trend-down {
+  color: #C62828;
+  background: #FFEBEE;
+}
+
+.stats-value {
+  color: #000000;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.stats-title {
+  color: #888888;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.stats-subtitle {
+  color: #AAAAAA;
+  font-size: 0.72rem;
+  margin-top: 4px;
+}

@@ -1,0 +1,168 @@
+/* ============================================
+   ADMIN HELPERS (LIGHT THEME)
+   ============================================ */
+
+/* Table helpers */
+.table-thumb {
+  width: 50px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #EEEEEE;
+}
+
+.table-name {
+  color: #000000;
+  font-weight: 600;
+}
+
+.table-code {
+  background: #F5F5F5;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #666666;
+  font-family: monospace;
+}
+
+.table-price {
+  color: #000000;
+  font-weight: 700;
+}
+
+.table-capitalize {
+  text-transform: capitalize;
+}
+
+.table-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.table-action-btn {
+  background: none;
+  border: 1px solid #E0E0E0;
+  color: #999999;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.table-action-btn.edit:hover {
+  border-color: #1565C0;
+  color: #1565C0;
+  background: #E3F2FD;
+}
+
+.table-action-btn.delete:hover {
+  border-color: #C62828;
+  color: #C62828;
+  background: #FFEBEE;
+}
+
+/* Filter pills */
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 7px 16px;
+  border: 1px solid #E0E0E0;
+  background: #FFFFFF;
+  color: #888888;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.filter-pill.active {
+  background: #000000;
+  border-color: #000000;
+  color: #FFFFFF;
+}
+
+.filter-pill:hover:not(.active) {
+  border-color: #000000;
+  color: #000000;
+}
+
+.results-count {
+  color: #999999;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* Settings */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-section {
+  background: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.settings-section-title {
+  color: #000000;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+.settings-info-card {
+  background: #FAFAFA;
+  border: 1px solid #EEEEEE;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.settings-info-card h3 {
+  color: #000000;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.settings-info-card p {
+  color: #666666;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.settings-info-card strong {
+  color: #000000;
+}
+
+/* Status badges override for light theme */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status-badge.pending { background: #FFF3E0; color: #E65100; }
+.status-badge.processing { background: #E3F2FD; color: #1565C0; }
+.status-badge.completed { background: #E8F5E9; color: #2E7D32; }
+.status-badge.failed { background: #FFEBEE; color: #C62828; }
+
+@media (max-width: 900px) {
+  .settings-grid { grid-template-columns: 1fr; }
+}
