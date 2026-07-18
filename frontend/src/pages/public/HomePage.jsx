@@ -41,62 +41,54 @@ function HomePage() {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            Try Sarees <span className="highlight">Virtually</span>
-            <br />Before You Buy
+            The Future of <span className="highlight">Saree Shopping</span>
           </h1>
           <p className="hero-subtitle">
-            Browse our collection, select your favorites, and see how they
-            look on you — all from your screen. No physical try-on needed.
+            Experience our premium collection through AI-powered virtual try-ons. 
+            See how luxury looks on you before you buy, seamlessly and instantly.
           </p>
           <div className="hero-actions">
             <Link to="/catalog" className="hero-btn-primary">
-              <FiShoppingBag /> Browse Collection
+              <FiShoppingBag /> Explore Collection
             </Link>
             <Link to="/register" className="hero-btn-secondary">
-              Get Started <FiArrowRight />
+              Virtual Try-On <FiArrowRight />
             </Link>
-          </div>
-        </div>
-
-        <div className="hero-visual">
-          <div className="hero-card">
-            <div className="hero-card-icon"></div>
-            <p>Select Saree</p>
-          </div>
-          <div className="hero-arrow">→</div>
-          <div className="hero-card">
-            <div className="hero-card-icon"></div>
-            <p>Take Photo</p>
-          </div>
-          <div className="hero-arrow">→</div>
-          <div className="hero-card">
-            <div className="hero-card-icon"></div>
-            <p>See Result</p>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="how-section">
-        <h2 className="section-title">How It Works</h2>
+      {/* How It Works with AI Generated Images */}
+      <section className="how-section main-content">
+        <h2 className="section-title" style={{textAlign: 'center'}}>The Virtual Experience</h2>
+        <p className="section-subtitle" style={{textAlign: 'center'}}>Three simple steps to see yourself in luxury silk.</p>
+        
         <div className="steps-grid">
-          <div className="step-card">
+          <div className="step-card glass-panel">
             <div className="step-number">1</div>
-            <FiShoppingBag className="step-icon" />
-            <h3>Browse & Select</h3>
-            <p>Browse our saree catalog and add your favorites to the try-on cart</p>
+            <img src="/images/saree_collection.png" alt="Select Saree" className="step-image" />
+            <div className="step-content">
+              <h3>Browse the Collection</h3>
+              <p>Explore our curated selection of premium Kanjivaram and silk sarees.</p>
+            </div>
           </div>
-          <div className="step-card">
+          
+          <div className="step-card glass-panel">
             <div className="step-number">2</div>
-            <FiCamera className="step-icon" />
-            <h3>Upload Photo</h3>
-            <p>Upload your photo or take one with your camera</p>
+            <img src="/images/mirror_interaction.png" alt="Interact with Mirror" className="step-image" />
+            <div className="step-content">
+              <h3>Take a Photo</h3>
+              <p>Use your camera or the Smart Mirror kiosk to capture your photo.</p>
+            </div>
           </div>
-          <div className="step-card">
+          
+          <div className="step-card glass-panel">
             <div className="step-number">3</div>
-            <FiStar className="step-icon" />
-            <h3>See Yourself</h3>
-            <p>AI generates realistic images of you wearing each saree</p>
+            <img src="/images/mirror_tryon.png" alt="See Result" className="step-image" />
+            <div className="step-content">
+              <h3>Instant Try-On</h3>
+              <p>Our advanced AI instantly drapes the saree over your image flawlessly.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -104,30 +96,34 @@ function HomePage() {
       {/* Categories */}
       {categories.length > 0 && (
         <section className="categories-section">
-          <h2 className="section-title">Shop by Category</h2>
-          <div className="categories-grid">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/catalog?category=${cat.slug}`}
-                className="category-card"
-              >
-                <div className="category-icon"></div>
-                <h3>{cat.name}</h3>
-                <p>{cat.saree_count} Sarees</p>
-              </Link>
-            ))}
+          <div className="main-content">
+            <h2 className="section-title">Curated Collections</h2>
+            <div className="categories-grid">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  to={`/catalog?category=${cat.slug}`}
+                  className="category-card glass-panel"
+                >
+                  <h3>{cat.name}</h3>
+                  <p>{cat.saree_count} Exclusive Designs</p>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
       {/* Featured Sarees */}
       {featuredSarees.length > 0 && (
-        <section className="featured-section">
+        <section className="featured-section main-content">
           <div className="section-header">
-            <h2 className="section-title">Featured Sarees</h2>
+            <div>
+              <h2 className="section-title" style={{marginBottom: '5px'}}>Featured Masterpieces</h2>
+              <p className="section-subtitle" style={{marginBottom: 0}}>Hand-picked selections for the season.</p>
+            </div>
             <Link to="/catalog" className="view-all-link">
-              View All <FiArrowRight />
+              View Collection <FiArrowRight />
             </Link>
           </div>
           <div className="product-grid">
@@ -140,11 +136,13 @@ function HomePage() {
 
       {/* CTA */}
       <section className="cta-section">
-        <h2>Ready to Try On?</h2>
-        <p>Create an account and start your virtual try-on experience</p>
-        <Link to="/register" className="hero-btn-primary">
-          Start Now — It's Free <FiArrowRight />
-        </Link>
+        <div className="main-content">
+          <h2>Step Into The Future</h2>
+          <p>Join thousands who have revolutionized their shopping experience.</p>
+          <Link to="/register" className="hero-btn-primary">
+            Create Free Account <FiArrowRight />
+          </Link>
+        </div>
       </section>
 
     </div>
