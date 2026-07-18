@@ -51,7 +51,7 @@ function RegisterPage() {
     setLoading(false)
 
     if (result.success) {
-      navigate('/catalog')
+      navigate('/login')
     }
   }
 

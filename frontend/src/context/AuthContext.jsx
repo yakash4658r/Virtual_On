@@ -1,6 +1,7 @@
-import { createContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useState, useEffect } from 'react'
 import authAPI from '../api/authAPI'
 import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 
 export const AuthContext = createContext(null)
 
@@ -25,7 +26,8 @@ export function AuthProvider({ children }) {
 
     try {
       const response = await authAPI.getProfile()
-      setUser(response.data.data)
+      // Profile returns UserResponse directly
+      setUser(response.data)
       setIsAuthenticated(true)
     } catch (error) {
       // Token expired or invalid
@@ -39,8 +41,9 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await authAPI.login({ email, password })
-      const { user: userData, tokens } = response.data.data
+      // Login returns LoginResponse { success, tokens, user }
+      const response = await authAPI.login({ username: email, password })
+      const { user: userData, tokens } = response.data
 
       localStorage.setItem('access_token', tokens.access)
       localStorage.setItem('refresh_token', tokens.refresh)
@@ -52,7 +55,7 @@ export function AuthProvider({ children }) {
       return { success: true, user: userData }
 
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed'
+      const message = error.response?.data?.detail || 'Login failed'
       toast.error(message)
       return { success: false, message }
     }
@@ -60,23 +63,18 @@ export function AuthProvider({ children }) {
 
   const register = async (data) => {
     try {
+      // Register returns UserResponse directly in FastAPI
       const response = await authAPI.register(data)
-      const { user: userData, tokens } = response.data.data
-
-      localStorage.setItem('access_token', tokens.access)
-      localStorage.setItem('refresh_token', tokens.refresh)
-
-      setUser(userData)
-      setIsAuthenticated(true)
-
-      toast.success('Account created successfully!')
-      return { success: true, user: userData }
+      
+      toast.success('Account created successfully! Please login.')
+      return { success: true }
 
     } catch (error) {
-      const errors = error.response?.data?.errors
-      const message = errors
-        ? Object.values(errors).flat().join(', ')
-        : 'Registration failed'
+      const detail = error.response?.data?.detail
+      const message = Array.isArray(detail) 
+        ? detail.map(e => e.msg).join(', ') 
+        : detail || 'Registration failed'
+      
       toast.error(message)
       return { success: false, message }
     }
@@ -101,7 +99,7 @@ export function AuthProvider({ children }) {
   const updateProfile = async (data) => {
     try {
       const response = await authAPI.updateProfile(data)
-      setUser(response.data.data)
+      setUser(response.data)
       toast.success('Profile updated')
       return { success: true }
     } catch (error) {
