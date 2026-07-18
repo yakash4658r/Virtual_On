@@ -55,7 +55,10 @@ export function AuthProvider({ children }) {
       return { success: true, user: userData }
 
     } catch (error) {
-      const message = error.response?.data?.detail || 'Login failed'
+      const detail = error.response?.data?.detail
+      const message = Array.isArray(detail) 
+        ? detail.map(e => e.msg).join(', ') 
+        : detail || 'Login failed'
       toast.error(message)
       return { success: false, message }
     }
@@ -76,7 +79,10 @@ export function AuthProvider({ children }) {
       return { success: true, user: userData }
 
     } catch (error) {
-      const message = error.response?.data?.detail || 'Google Login failed'
+      const detail = error.response?.data?.detail
+      const message = Array.isArray(detail) 
+        ? detail.map(e => e.msg).join(', ') 
+        : detail || 'Google Login failed'
       toast.error(message)
       return { success: false, message }
     }

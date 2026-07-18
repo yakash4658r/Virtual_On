@@ -7,7 +7,11 @@ const authAPI = {
   },
 
   login: (data) => {
-    return axiosInstance.post('/auth/login', data)
+    return axiosInstance.post('/auth/login', new URLSearchParams(data), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
   },
 
   googleLogin: (token) => {
