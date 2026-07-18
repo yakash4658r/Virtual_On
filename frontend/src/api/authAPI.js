@@ -3,33 +3,33 @@ import axiosInstance from './axiosInstance'
 const authAPI = {
 
   register: (data) => {
-    return axiosInstance.post('/auth/register/', data)
+    return axiosInstance.post('/auth/register', data)
   },
 
   login: (data) => {
-    return axiosInstance.post('/auth/login/', data)
+    return axiosInstance.post('/auth/login', data)
   },
 
   googleLogin: (token) => {
-    return axiosInstance.post('/auth/google/', { token })
+    return axiosInstance.post('/auth/google', { token })
   },
 
   logout: (refreshToken) => {
-    return axiosInstance.post('/auth/logout/', {
+    return axiosInstance.post('/auth/logout', {
       refresh_token: refreshToken,
     })
   },
 
   getProfile: () => {
-    return axiosInstance.get('/auth/profile/')
+    return axiosInstance.get('/auth/profile')
   },
 
   updateProfile: (data) => {
-    return axiosInstance.put('/auth/profile/', data)
+    return axiosInstance.put('/auth/profile', data)
   },
 
   changePassword: (data) => {
-    return axiosInstance.post('/auth/change-password/', data)
+    return axiosInstance.post('/auth/change-password', data)
   },
 }
 

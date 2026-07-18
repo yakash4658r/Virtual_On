@@ -48,10 +48,17 @@ async def google_login(request: GoogleLoginRequest, db: AsyncSession = Depends(g
             "tokens": {"access": access_token, "refresh": refresh_token},
             "user": user
         }
-    except ValueError:
+    except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Google token",
+            detail=f"Invalid Google token: {str(ve)}",
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Google Login error: {str(e)}",
         )
 
 @router.post("/register", response_model=UserResponse)
