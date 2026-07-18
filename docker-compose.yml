@@ -1,0 +1,113 @@
+# AI Smart Mirror — Production Docker Compose
+# Usage: docker compose up --build
+
+services:
+  # ─── PostgreSQL Database ───────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: sm_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: saree_mirror
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (Celery Broker + Cache) ─────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: sm_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── FastAPI Backend ───────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sm_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/saree_mirror
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+      STORAGE_ENDPOINT_URL: ${STORAGE_ENDPOINT_URL:-}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
+      GPU_SERVER_URL: ${GPU_SERVER_URL:-http://localhost:8001}
+      GPU_SERVER_API_KEY: ${GPU_SERVER_API_KEY:-}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_media:/app/media
+
+  # ─── Celery Worker ─────────────────────────────────
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sm_celery_worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/saree_mirror
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+      STORAGE_ENDPOINT_URL: ${STORAGE_ENDPOINT_URL:-}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
+      GPU_SERVER_URL: ${GPU_SERVER_URL:-http://localhost:8001}
+      GPU_SERVER_API_KEY: ${GPU_SERVER_API_KEY:-}
+    command: celery -A core.celery_app worker -Q tryon_queue --loglevel=info --concurrency=4
+    volumes:
+      - backend_media:/app/media
+
+  # ─── React Frontend (Nginx) ────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sm_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
+  redisdata:
+  backend_media:

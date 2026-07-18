@@ -29,22 +29,32 @@ function BarcodeListPage() {
     const printWindow = window.open('', '_blank')
     let html = `
       <html>
-      <head><title>All Barcodes</title>
+      <head>
+      <title>Barcode Labels for Printing</title>
       <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .barcode-item { display: inline-block; text-align: center; margin: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
-        .barcode-item img { max-width: 200px; }
-        .barcode-item p { margin: 5px 0; font-size: 12px; }
+        @page { size: A4; margin: 0; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 10mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10mm; background: white; }
+        .barcode-label { 
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          padding: 10px; border: 1px dashed #ccc; border-radius: 4px; height: 120px; page-break-inside: avoid;
+        }
+        .barcode-label img { max-width: 100%; max-height: 60px; object-fit: contain; }
+        .label-text { margin: 4px 0 0; font-size: 11px; text-align: center; color: #333; font-weight: bold; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .price-text { margin: 0; font-size: 12px; color: #000; font-weight: 800; }
       </style>
-      </head><body><h2>Saree Barcodes</h2>
+      </head>
+      <body>
     `
 
     barcodes.forEach((b) => {
+      // Use absolute URL for print window since it opens about:blank
+      const imgUrl = b.barcode_image?.startsWith('/') ? window.location.origin + b.barcode_image : b.barcode_image
+      
       html += `
-        <div class="barcode-item">
-          ${b.barcode_image ? `<img src="${b.barcode_image}" />` : `<p><strong>${b.barcode_id}</strong></p>`}
-          <p>${b.name}</p>
-          <p>Rs. ${b.price}</p>
+        <div class="barcode-label">
+          ${imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" />` : `<div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">${b.barcode_id}</div>`}
+          <p class="label-text">${b.name}</p>
+          <p class="price-text">₹ ${b.price}</p>
         </div>
       `
     })
@@ -52,7 +62,12 @@ function BarcodeListPage() {
     html += '</body></html>'
     printWindow.document.write(html)
     printWindow.document.close()
-    printWindow.print()
+    
+    // Wait for images to load before printing
+    setTimeout(() => {
+      printWindow.focus()
+      printWindow.print()
+    }, 500)
   }
 
   if (loading) return <PageLoader text="Loading barcodes..." />

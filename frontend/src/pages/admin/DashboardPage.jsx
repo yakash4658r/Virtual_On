@@ -1,269 +1,174 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import {
-  FiBox, FiCheckCircle, FiAlertTriangle, FiUsers,
-  FiCamera, FiCalendar, FiTrendingUp, FiDollarSign,
-  FiPlusCircle, FiShoppingBag, FiBarChart2, FiDownload,
-  FiActivity, FiDatabase, FiServer, FiHardDrive,
-  FiClock, FiArrowRight
-} from 'react-icons/fi'
-import { useAuth } from '../../hooks/useAuth'
-import tryonAPI from '../../api/tryonAPI'
-import StatsCard from '../../components/admin/StatsCard'
-import DataTable from '../../components/admin/DataTable'
-import { PageLoader } from '../../components/common/Loader'
-import { timeAgo, getStatusLabel } from '../../utils/helpers'
-import './AdminPages.css'
+import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import storeAPI from '../../api/storeAPI'
 
 function DashboardPage() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const [dashboard, setDashboard] = useState(null)
+  const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    loadDashboard()
+    fetchStats()
   }, [])
 
-  const loadDashboard = async () => {
+  const fetchStats = async () => {
     try {
-      const res = await tryonAPI.getDashboard()
-      setDashboard(res.data.data)
-    } catch (error) {
-      console.error('Dashboard error:', error)
+      const res = await storeAPI.getDashboardStats()
+      setStats(res.data.data)
+    } catch (err) {
+      console.error("Failed to load dashboard stats", err)
     } finally {
       setLoading(false)
     }
   }
 
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good Morning'
-    if (hour < 17) return 'Good Afternoon'
-    return 'Good Evening'
-  }
-
-  const getFormattedDate = () => {
-    return new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
-
-  if (loading) return <PageLoader text="Loading dashboard..." />
-
-  const hasDashboard = !!dashboard
-  const sarees = dashboard?.sarees || { total: 0, active: 0, out_of_stock: 0 }
-  const tryons = dashboard?.tryons || { today: 0, this_week: 0, this_month: 0 }
-  const users = dashboard?.users || { total: 0 }
-  const popular_sarees = dashboard?.popular_sarees || []
-  const recent_sessions = dashboard?.recent_sessions || []
-  const ai_stats = dashboard?.ai_stats || { total_cost_usd: 0, avg_processing_time: 0 }
-
-  const quickActions = [
-    { label: 'Add Product', icon: <FiPlusCircle />, path: '/admin/products/add', desc: 'Add a new saree' },
-    { label: 'View Catalog', icon: <FiShoppingBag />, path: '/admin/products', desc: 'Manage products' },
-    { label: 'Barcodes', icon: <FiBarChart2 />, path: '/admin/barcodes', desc: 'Scan & manage' },
-    { label: 'Export Data', icon: <FiDownload />, path: '#', desc: 'Download reports' },
-  ]
-
-  const recentColumns = [
-    { key: 'user_name', label: 'Customer' },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (val) => <span className={`status-badge ${val}`}>{getStatusLabel(val)}</span>,
-    },
-    { key: 'saree_count', label: 'Sarees' },
-    {
-      key: 'created_at',
-      label: 'Time',
-      render: (val) => timeAgo(val),
-    },
-  ]
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>
 
   return (
-    <div className="admin-page">
-      {/* Welcome Banner */}
-      <div className="welcome-banner">
-        <div className="welcome-text">
-          <h1 className="welcome-greeting">{getGreeting()}, {user?.name || 'Admin'}</h1>
-          <p className="welcome-date">{getFormattedDate()}</p>
-        </div>
-        <div className="welcome-actions">
-          <Link to="/admin/products/add" className="welcome-btn">
-            <FiPlusCircle /> Add Product
-          </Link>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-6 max-w-7xl mx-auto space-y-6"
+    >
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Store Overview</h1>
+          <p className="text-gray-500 mt-1">Welcome back. Here's what's happening today.</p>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        <StatsCard
-          title="Total Sarees"
-          value={sarees.total}
-          icon={<FiBox />}
-          color="primary"
-          trend="up"
-          trendValue="+12%"
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Try-Ons Today" 
+          value={stats?.tryons?.today || 0}
+          subtitle={`${stats?.tryons?.this_week || 0} this week`}
+          icon="👗"
+          color="bg-purple-100 text-purple-600"
         />
-        <StatsCard
-          title="In Stock"
-          value={sarees.active}
-          icon={<FiCheckCircle />}
-          color="success"
-          trend="up"
-          trendValue="+5%"
+        <StatCard 
+          title="Active Devices" 
+          value={stats?.devices?.online || 0}
+          subtitle={`Out of ${stats?.devices?.total || 0} registered`}
+          icon="🖥️"
+          color="bg-emerald-100 text-emerald-600"
         />
-        <StatsCard
-          title="Out of Stock"
-          value={sarees.out_of_stock}
-          icon={<FiAlertTriangle />}
-          color="warning"
-          trend="down"
-          trendValue="-2"
+        <StatCard 
+          title="Total Sarees" 
+          value={stats?.sarees?.total || 0}
+          subtitle={`${stats?.sarees?.active || 0} active in catalog`}
+          icon="🛍️"
+          color="bg-blue-100 text-blue-600"
         />
-        <StatsCard
-          title="Total Customers"
-          value={users.total}
-          icon={<FiUsers />}
-          color="info"
-          trend="up"
-          trendValue="+8%"
+        <StatCard 
+          title="Total Customers" 
+          value={stats?.users?.total || 0}
+          subtitle="Saved profiles"
+          icon="👥"
+          color="bg-amber-100 text-amber-600"
         />
       </div>
 
-      <div className="stats-grid stats-grid-secondary">
-        <StatsCard
-          title="Today's Try-Ons"
-          value={tryons.today}
-          icon={<FiCamera />}
-          color="primary"
-        />
-        <StatsCard
-          title="This Week"
-          value={tryons.this_week}
-          icon={<FiCalendar />}
-          color="success"
-        />
-        <StatsCard
-          title="This Month"
-          value={tryons.this_month}
-          icon={<FiTrendingUp />}
-          color="info"
-        />
-        <StatsCard
-          title="AI Cost (30d)"
-          value={`$${ai_stats.total_cost_usd.toFixed(2)}`}
-          icon={<FiDollarSign />}
-          color="warning"
-          subtitle={`Avg: ${ai_stats.avg_processing_time}s per image`}
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="quick-actions-section">
-        <h2 className="section-heading">Quick Actions</h2>
-        <div className="quick-actions-grid">
-          {quickActions.map((action) => (
-            <Link
-              key={action.label}
-              to={action.path}
-              className="quick-action-card"
-            >
-              <div className="quick-action-icon">{action.icon}</div>
-              <div className="quick-action-info">
-                <p className="quick-action-label">{action.label}</p>
-                <p className="quick-action-desc">{action.desc}</p>
-              </div>
-              <FiArrowRight className="quick-action-arrow" />
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Dashboard Grid */}
-      <div className="dashboard-grid">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         {/* Recent Sessions */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h2 className="section-heading">
-              <FiClock className="section-heading-icon" />
-              Recent Try-On Sessions
-            </h2>
-            <Link to="/admin/tryon-history" className="view-all-link">
-              View All <FiArrowRight />
-            </Link>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:col-span-2">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">Recent Try-On Sessions</h2>
+            <button 
+              onClick={() => navigate('/admin/sessions')}
+              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+            >
+              View All
+            </button>
           </div>
-          <DataTable
-            columns={recentColumns}
-            data={recent_sessions}
-            emptyMessage="No sessions yet"
-          />
-        </div>
-
-        {/* Right Column */}
-        <div className="dashboard-right-col">
-          {/* Popular Sarees */}
-          <div className="dashboard-section">
-            <h2 className="section-heading">
-              <FiTrendingUp className="section-heading-icon" />
-              Most Popular Sarees
-            </h2>
-            <div className="popular-list">
-              {popular_sarees && popular_sarees.length > 0 ? (
-                popular_sarees.map((item, index) => (
-                  <div key={index} className="popular-item">
-                    <span className="popular-rank">#{index + 1}</span>
-                    <div className="popular-info">
-                      <p className="popular-name">{item.saree__name}</p>
-                      <p className="popular-code">{item.saree__barcode_id}</p>
+          
+          {stats?.recent_sessions?.length > 0 ? (
+            <div className="space-y-4">
+              {stats.recent_sessions.map((session, i) => (
+                <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                      📸
                     </div>
-                    <span className="popular-count">{item.try_count} tries</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Session {session.id.slice(0,8)}</p>
+                      <p className="text-xs text-gray-500">Device: {session.device_id}</p>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="no-data">No data yet</p>
-              )}
+                  <div className="text-right">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      session.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      session.status === 'processing' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {session.status.toUpperCase()}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(session.created_at + 'Z').toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No sessions recorded yet today.
+            </div>
+          )}
+        </div>
 
-          {/* System Health */}
-          <div className="dashboard-section">
-            <h2 className="section-heading">
-              <FiActivity className="section-heading-icon" />
-              System Health
-            </h2>
-            <div className="health-list">
-              <div className="health-item">
-                <div className="health-dot health-dot-green"></div>
-                <FiServer className="health-icon" />
-                <span className="health-label">API Server</span>
-                <span className="health-status health-ok">Operational</span>
+        {/* Quick Actions */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate('/admin/sarees/new')}
+              className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-colors text-left"
+            >
+              <span className="text-2xl">➕</span>
+              <div>
+                <p className="font-semibold text-gray-800">Add New Saree</p>
+                <p className="text-xs text-gray-500">Upload images & generate barcode</p>
               </div>
-              <div className="health-item">
-                <div className="health-dot health-dot-green"></div>
-                <FiDatabase className="health-icon" />
-                <span className="health-label">Database</span>
-                <span className="health-status health-ok">Connected</span>
+            </button>
+            <button 
+              onClick={() => navigate('/admin/devices')}
+              className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition-colors text-left"
+            >
+              <span className="text-2xl">🖥️</span>
+              <div>
+                <p className="font-semibold text-gray-800">Manage Devices</p>
+                <p className="text-xs text-gray-500">Check mirror status</p>
               </div>
-              <div className="health-item">
-                <div className="health-dot health-dot-green"></div>
-                <FiHardDrive className="health-icon" />
-                <span className="health-label">Storage</span>
-                <span className="health-status health-ok">Available</span>
+            </button>
+            <button 
+              onClick={() => navigate('/admin/barcodes')}
+              className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:border-amber-500 hover:bg-amber-50 transition-colors text-left"
+            >
+              <span className="text-2xl">🖨️</span>
+              <div>
+                <p className="font-semibold text-gray-800">Print Barcodes</p>
+                <p className="text-xs text-gray-500">Download barcode PDFs for tags</p>
               </div>
-              <div className="health-item">
-                <div className="health-dot health-dot-yellow"></div>
-                <FiCamera className="health-icon" />
-                <span className="health-label">AI Engine</span>
-                <span className="health-status health-mock">Mock Mode</span>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function StatCard({ title, value, subtitle, icon, color }) {
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
+        <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
+        {subtitle && <p className="text-xs text-gray-400 mt-2">{subtitle}</p>}
+      </div>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${color}`}>
+        {icon}
       </div>
     </div>
   )

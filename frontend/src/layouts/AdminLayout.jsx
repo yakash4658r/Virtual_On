@@ -5,7 +5,7 @@ import {
   FiGrid, FiShoppingBag, FiBarChart2,
   FiTag, FiClock, FiSettings, FiChevronLeft,
   FiChevronRight, FiLogOut, FiUser, FiLayers,
-  FiPlusCircle
+  FiPlusCircle, FiMonitor, FiImage, FiActivity
 } from 'react-icons/fi'
 import Navbar from './Navbar'
 import './AdminLayout.css'
@@ -26,22 +26,29 @@ function AdminLayout() {
       title: 'Main',
       items: [
         { path: '/admin', icon: <FiGrid />, label: 'Dashboard', exact: true },
-        { path: '/admin/products', icon: <FiShoppingBag />, label: 'Products' },
-        { path: '/admin/products/add', icon: <FiPlusCircle />, label: 'Add Product' },
+        { path: '/admin/analytics', icon: <FiActivity />, label: 'Analytics' },
       ],
     },
     {
-      title: 'Management',
+      title: 'Kiosk System',
       items: [
+        { path: '/admin/devices', icon: <FiMonitor />, label: 'Devices' },
+        { path: '/admin/sessions', icon: <FiImage />, label: 'Try-On Sessions' },
+      ],
+    },
+    {
+      title: 'Catalog Management',
+      items: [
+        { path: '/admin/products', icon: <FiShoppingBag />, label: 'Products' },
+        { path: '/admin/products/add', icon: <FiPlusCircle />, label: 'Add Product' },
         { path: '/admin/categories', icon: <FiLayers />, label: 'Categories' },
         { path: '/admin/barcodes', icon: <FiBarChart2 />, label: 'Barcodes' },
-        { path: '/admin/tryon-history', icon: <FiClock />, label: 'Try-On History' },
       ],
     },
     {
       title: 'System',
       items: [
-        { path: '/admin/settings', icon: <FiSettings />, label: 'Settings' },
+        { path: '/admin/settings', icon: <FiSettings />, label: 'Store Settings' },
       ],
     },
   ]
