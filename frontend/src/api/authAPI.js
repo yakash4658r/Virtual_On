@@ -1,21 +1,8 @@
 import axiosInstance from './axiosInstance'
 
 const authAPI = {
-
-  register: (data) => {
-    return axiosInstance.post('/auth/register', data)
-  },
-
-  login: (data) => {
-    return axiosInstance.post('/auth/login', new URLSearchParams(data), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    })
-  },
-
-  googleLogin: (token) => {
-    return axiosInstance.post('/auth/google', { token })
+  mirrorLogin: (mirrorId) => {
+    return axiosInstance.post('/auth/mirror-login', { mirror_id: mirrorId })
   },
 
   logout: (refreshToken) => {
@@ -30,11 +17,7 @@ const authAPI = {
 
   updateProfile: (data) => {
     return axiosInstance.put('/auth/profile', data)
-  },
-
-  changePassword: (data) => {
-    return axiosInstance.post('/auth/change-password', data)
-  },
+  }
 }
 
 export default authAPI

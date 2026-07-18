@@ -1,7 +1,6 @@
 import { createContext, useState, useEffect } from 'react'
 import authAPI from '../api/authAPI'
 import toast from 'react-hot-toast'
-import { useNavigate } from 'react-router-dom'
 
 export const AuthContext = createContext(null)
 
@@ -39,10 +38,9 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const login = async (email, password) => {
+  const mirrorLogin = async (mirrorId) => {
     try {
-      // Login returns LoginResponse { success, tokens, user }
-      const response = await authAPI.login({ username: email, password })
+      const response = await authAPI.mirrorLogin(mirrorId)
       const { user: userData, tokens } = response.data
 
       localStorage.setItem('access_token', tokens.access)
@@ -51,57 +49,14 @@ export function AuthProvider({ children }) {
       setUser(userData)
       setIsAuthenticated(true)
 
-      toast.success(`Welcome back, ${userData.name}!`)
+      toast.success(`Access Granted: ${userData.name}`)
       return { success: true, user: userData }
 
     } catch (error) {
       const detail = error.response?.data?.detail
       const message = Array.isArray(detail) 
         ? detail.map(e => e.msg).join(', ') 
-        : detail || 'Login failed'
-      toast.error(message)
-      return { success: false, message }
-    }
-  }
-
-  const googleLogin = async (token) => {
-    try {
-      const response = await authAPI.googleLogin(token)
-      const { user: userData, tokens } = response.data
-
-      localStorage.setItem('access_token', tokens.access)
-      localStorage.setItem('refresh_token', tokens.refresh)
-
-      setUser(userData)
-      setIsAuthenticated(true)
-
-      toast.success(`Welcome back, ${userData.name}!`)
-      return { success: true, user: userData }
-
-    } catch (error) {
-      const detail = error.response?.data?.detail
-      const message = Array.isArray(detail) 
-        ? detail.map(e => e.msg).join(', ') 
-        : detail || 'Google Login failed'
-      toast.error(message)
-      return { success: false, message }
-    }
-  }
-
-  const register = async (data) => {
-    try {
-      // Register returns UserResponse directly in FastAPI
-      const response = await authAPI.register(data)
-      
-      toast.success('Account created successfully! Please login.')
-      return { success: true }
-
-    } catch (error) {
-      const detail = error.response?.data?.detail
-      const message = Array.isArray(detail) 
-        ? detail.map(e => e.msg).join(', ') 
-        : detail || 'Registration failed'
-      
+        : detail || 'Invalid ID or Access Denied'
       toast.error(message)
       return { success: false, message }
     }
@@ -119,7 +74,7 @@ export function AuthProvider({ children }) {
       localStorage.clear()
       setUser(null)
       setIsAuthenticated(false)
-      toast.success('Logged out')
+      toast.success('Logged out successfully')
     }
   }
 
@@ -139,14 +94,12 @@ export function AuthProvider({ children }) {
     user,
     loading,
     isAuthenticated,
-    login,
-    googleLogin,
-    register,
+    mirrorLogin,
     logout,
     updateProfile,
     checkAuth,
-    isAdmin: user?.role === 'store_admin' || user?.role === 'superadmin',
-    isCustomer: user?.role === 'customer',
+    isAdmin: user?.role === 'store_admin' || user?.role === 'super_admin',
+    isSuperAdmin: user?.role === 'super_admin'
   }
 
   return (
