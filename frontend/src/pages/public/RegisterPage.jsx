@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import Button from '../../components/common/Button'
+import { GoogleLogin } from '@react-oauth/google'
 import './AuthPages.css'
 
 function RegisterPage() {
   const navigate = useNavigate()
-  const { register, isAuthenticated } = useAuth()
+  const { register, googleLogin, isAuthenticated } = useAuth()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -42,6 +43,16 @@ function RegisterPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true)
+    const result = await googleLogin(credentialResponse.credential)
+    setLoading(false)
+    if (result.success) {
+      if (result.user.role === 'store_admin' || result.user.role === 'superadmin') navigate('/admin')
+      else navigate('/catalog')
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
@@ -61,6 +72,21 @@ function RegisterPage() {
         <div className="auth-header">
           <h1>Create Account</h1>
           <p>Register to start virtual try-on</p>
+        </div>
+
+        <div className="auth-google">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.log('Login Failed');
+            }}
+            useOneTap
+            width="100%"
+          />
+        </div>
+
+        <div className="auth-divider">
+          <span>OR REGISTER WITH EMAIL</span>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>

@@ -4,10 +4,55 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.security import verify_password, create_access_token, create_refresh_token
 from core.dependencies import get_current_user
-from schemas.user import UserCreate, UserResponse, LoginResponse, TokenData, Token
+from schemas.user import UserCreate, UserResponse, LoginResponse, TokenData, Token, GoogleLoginRequest
 from services.auth_service import get_user_by_email, create_user
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import os
 
 router = APIRouter()
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+
+@router.post("/google", response_model=LoginResponse)
+async def google_login(request: GoogleLoginRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        # Verify the token
+        idinfo = id_token.verify_oauth2_token(
+            request.token, 
+            requests.Request(), 
+            GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=10
+        )
+        
+        email = idinfo['email']
+        name = idinfo.get('name', email.split('@')[0])
+        
+        user = await get_user_by_email(db, email)
+        
+        # If user doesn't exist, create one
+        if not user:
+            user_in = UserCreate(
+                name=name,
+                email=email,
+                password="GOOGLE_AUTH_PLACEHOLDER_PASS", # Use a placeholder
+            )
+            user = await create_user(db, user_in)
+            
+        # Generate tokens
+        access_token = create_access_token(data={"sub": user.id, "role": user.role})
+        refresh_token = create_refresh_token(data={"sub": user.id, "role": user.role})
+        
+        return {
+            "success": True,
+            "tokens": {"access": access_token, "refresh": refresh_token},
+            "user": user
+        }
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token",
+        )
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):

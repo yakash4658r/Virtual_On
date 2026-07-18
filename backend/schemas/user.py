@@ -31,3 +31,6 @@ class LoginResponse(BaseModel):
     success: bool
     tokens: Token
     user: UserResponse
+
+class GoogleLoginRequest(BaseModel):
+    token: str

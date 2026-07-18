@@ -61,6 +61,27 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const googleLogin = async (token) => {
+    try {
+      const response = await authAPI.googleLogin(token)
+      const { user: userData, tokens } = response.data
+
+      localStorage.setItem('access_token', tokens.access)
+      localStorage.setItem('refresh_token', tokens.refresh)
+
+      setUser(userData)
+      setIsAuthenticated(true)
+
+      toast.success(`Welcome back, ${userData.name}!`)
+      return { success: true, user: userData }
+
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Google Login failed'
+      toast.error(message)
+      return { success: false, message }
+    }
+  }
+
   const register = async (data) => {
     try {
       // Register returns UserResponse directly in FastAPI
@@ -113,6 +134,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated,
     login,
+    googleLogin,
     register,
     logout,
     updateProfile,

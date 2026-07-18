@@ -52,6 +52,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/saree_mirror
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       STORAGE_BUCKET: ${STORAGE_BUCKET:-}
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
@@ -100,6 +101,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     container_name: sm_frontend
     restart: unless-stopped
     depends_on:

@@ -10,6 +10,10 @@ const authAPI = {
     return axiosInstance.post('/auth/login/', data)
   },
 
+  googleLogin: (token) => {
+    return axiosInstance.post('/auth/google/', { token })
+  },
+
   logout: (refreshToken) => {
     return axiosInstance.post('/auth/logout/', {
       refresh_token: refreshToken,
