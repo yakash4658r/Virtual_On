@@ -4,52 +4,56 @@ import { useAuth } from '../../hooks/useAuth'
 import './MirrorEntryPage.css'
 
 const MirrorEntryPage = () => {
-  const [mirrorId, setMirrorId] = useState('')
+  const [loginId, setLoginId] = useState('')
   const [loading, setLoading] = useState(false)
-  const { mirrorLogin } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!mirrorId.trim()) return
+    if (!loginId.trim()) return
 
     setLoading(true)
-    const result = await mirrorLogin(mirrorId)
+    // We renamed mirrorLogin to login in useAuth, or just use login
+    const result = await login(loginId.trim())
     setLoading(false)
 
     if (result.success) {
-      if (result.user.role === 'super_admin') {
+      if (result.role === 'super_admin') {
         navigate('/superadmin')
       } else {
-        // Assume kiosk/store_admin mode
-        localStorage.setItem('deviceId', mirrorId)
-        navigate('/mirror/' + mirrorId)
+        navigate('/admin')
       }
     }
   }
 
   return (
-    <div className="mirror-entry-container">
-      <div className="mirror-entry-card">
-        <h1>AI Smart Mirror</h1>
-        <p>Enter your Mirror ID to start</p>
+    <div className="unified-login-container">
+      <div className="unified-login-card">
+        <h1 className="brand-title">Welcome to Yakash Tech</h1>
         
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="input-container">
             <input
-              type="password"
-              placeholder="Mirror ID"
-              value={mirrorId}
-              onChange={(e) => setMirrorId(e.target.value)}
+              type="text"
+              placeholder="Enter Your ID"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               disabled={loading}
               autoComplete="off"
               autoFocus
+              className="id-input"
             />
           </div>
-          <button type="submit" disabled={loading || !mirrorId.trim()}>
-            {loading ? 'Authenticating...' : 'Launch Mirror'}
+          
+          <button type="submit" className="continue-btn" disabled={loading || !loginId.trim()}>
+            {loading ? 'WAIT...' : 'CONTINUE'}
           </button>
         </form>
+        
+        <p className="contact-text">
+          Don't have an ID? Contact us at contact@yakash.tech
+        </p>
       </div>
     </div>
   )

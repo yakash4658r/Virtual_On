@@ -43,10 +43,16 @@ function Navbar() {
                 </>
               )}
 
-              {isAdmin && (
+              {user?.role === 'store_admin' && (
                 <Link to="/admin" className="nav-link">
                   <FiSettings />
                   <span>Admin</span>
+                </Link>
+              )}
+              {user?.role === 'super_admin' && (
+                <Link to="/superadmin" className="nav-link">
+                  <FiSettings />
+                  <span>Super Admin</span>
                 </Link>
               )}
 

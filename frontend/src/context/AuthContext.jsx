@@ -10,13 +10,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // On app load — check if token exists and fetch profile
+  // On app load — check if token exists
   useEffect(() => {
     checkAuth()
   }, [])
 
   const checkAuth = async () => {
     const token = localStorage.getItem('access_token')
+    const role = localStorage.getItem('role')
 
     if (!token) {
       setLoading(false)
@@ -24,9 +25,13 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const response = await authAPI.getProfile()
-      // Profile returns UserResponse directly
-      setUser(response.data)
+      // Just check if token is valid
+      await authAPI.getProfile()
+      
+      const storeInfoStr = localStorage.getItem('store_info')
+      const storeInfo = storeInfoStr ? JSON.parse(storeInfoStr) : null
+      
+      setUser({ role, store_info: storeInfo })
       setIsAuthenticated(true)
     } catch (error) {
       // Token expired or invalid
@@ -38,25 +43,30 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const mirrorLogin = async (mirrorId) => {
+  const login = async (id) => {
     try {
-      const response = await authAPI.mirrorLogin(mirrorId)
-      const { user: userData, tokens } = response.data
+      const response = await authAPI.login(id)
+      const { role, tokens, store_info } = response.data
 
       localStorage.setItem('access_token', tokens.access)
       localStorage.setItem('refresh_token', tokens.refresh)
+      localStorage.setItem('role', role)
+      
+      if (store_info) {
+        localStorage.setItem('store_info', JSON.stringify(store_info))
+      }
 
-      setUser(userData)
+      setUser({ role, store_info })
       setIsAuthenticated(true)
 
-      toast.success(`Access Granted: ${userData.name}`)
-      return { success: true, user: userData }
+      toast.success(role === 'super_admin' ? 'Welcome Yakash' : `Welcome ${store_info.store_name}`)
+      return { success: true, role }
 
     } catch (error) {
       const detail = error.response?.data?.detail
       const message = Array.isArray(detail) 
         ? detail.map(e => e.msg).join(', ') 
-        : detail || 'Invalid ID or Access Denied'
+        : detail || 'Invalid ID'
       toast.error(message)
       return { success: false, message }
     }
@@ -69,7 +79,7 @@ export function AuthProvider({ children }) {
         await authAPI.logout(refreshToken)
       }
     } catch (error) {
-      // Ignore logout API error
+      // Ignore
     } finally {
       localStorage.clear()
       setUser(null)
@@ -78,25 +88,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const updateProfile = async (data) => {
-    try {
-      const response = await authAPI.updateProfile(data)
-      setUser(response.data)
-      toast.success('Profile updated')
-      return { success: true }
-    } catch (error) {
-      toast.error('Failed to update profile')
-      return { success: false }
-    }
-  }
-
   const value = {
     user,
     loading,
     isAuthenticated,
-    mirrorLogin,
+    login,
     logout,
-    updateProfile,
     checkAuth,
     isAdmin: user?.role === 'store_admin' || user?.role === 'super_admin',
     isSuperAdmin: user?.role === 'super_admin'

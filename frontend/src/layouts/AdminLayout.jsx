@@ -26,14 +26,7 @@ function AdminLayout() {
       title: 'Main',
       items: [
         { path: '/admin', icon: <FiGrid />, label: 'Dashboard', exact: true },
-        { path: '/admin/analytics', icon: <FiActivity />, label: 'Analytics' },
-      ],
-    },
-    {
-      title: 'Kiosk System',
-      items: [
-        { path: '/admin/devices', icon: <FiMonitor />, label: 'Devices' },
-        { path: '/admin/sessions', icon: <FiImage />, label: 'Try-On Sessions' },
+        { path: '/admin/sessions', icon: <FiClock />, label: 'Try-On History' },
       ],
     },
     {

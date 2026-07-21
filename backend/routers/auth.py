@@ -1,74 +1,80 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from core.database import get_db
 from core.security import create_access_token, create_refresh_token
-from core.dependencies import get_current_user
-from schemas.user import UserResponse, LoginResponse
-from models.device import Device
-from models.user import User
+from models.store import Store
+from typing import Optional
 
 router = APIRouter()
 
-class MirrorLoginRequest(BaseModel):
-    mirror_id: str
+class LoginRequest(BaseModel):
+    id: str
 
-@router.post("/mirror-login", response_model=LoginResponse)
-async def mirror_login(request: MirrorLoginRequest, db: AsyncSession = Depends(get_db)):
-    mirror_id = request.mirror_id.strip()
+class Token(BaseModel):
+    access: str
+    refresh: str
+
+class LoginResponse(BaseModel):
+    success: bool
+    tokens: Token
+    role: str
+    store_info: Optional[dict] = None
+
+@router.post("/login", response_model=LoginResponse)
+async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
+    login_id = request.id.strip()
     
-    from datetime import datetime
+    super_admin_id = os.getenv("SUPER_ADMIN_ID", "yakash4658r")
+    
     # 1. Check Super Admin
-    if mirror_id == "yakash4658r":
-        user = User(
-            id="superadmin-1",
-            name="Super Admin",
-            email="admin@virtualon.com",
-            role="super_admin",
-            is_active=True,
-            created_at=datetime.utcnow()
-        )
-        access_token = create_access_token(data={"sub": user.id, "role": user.role})
-        refresh_token = create_refresh_token(data={"sub": user.id, "role": user.role})
+    if login_id == super_admin_id:
+        user_id = "superadmin-1"
+        role = "super_admin"
+        
+        access_token = create_access_token(data={"sub": user_id, "role": role})
+        refresh_token = create_refresh_token(data={"sub": user_id, "role": role})
+        
         return {
             "success": True,
             "tokens": {"access": access_token, "refresh": refresh_token},
-            "user": user
+            "role": role,
+            "store_info": None
         }
     
-    # 2. Check Device for Kiosk Mode
-    result = await db.execute(select(Device).where(Device.device_id == mirror_id))
-    device = result.scalars().first()
+    # 2. Check Store Activation Code
+    result = await db.execute(select(Store).where(Store.activation_code == login_id, Store.is_active == True))
+    store = result.scalars().first()
     
-    if not device:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Mirror ID",
-        )
+    if store:
+        role = "store_admin"
+        access_token = create_access_token(data={"sub": store.id, "role": role, "store_id": store.id})
+        refresh_token = create_refresh_token(data={"sub": store.id, "role": role, "store_id": store.id})
         
-    if device.status != "online":
-        pass # Optional: We could reject if offline, but better to allow and maybe update status to online later
+        return {
+            "success": True,
+            "tokens": {"access": access_token, "refresh": refresh_token},
+            "role": role,
+            "store_info": {
+                "store_id": store.id,
+                "store_name": store.store_name,
+                "activation_code": store.activation_code,
+                "plan_type": store.plan_type,
+                "credits_remaining": store.credits_remaining,
+                "daily_limit": store.daily_limit,
+                "photos_used_today": store.photos_used_today
+            }
+        }
         
-    user = User(
-        id=device.id,
-        name=f"Mirror {device.device_id}",
-        email=f"{device.device_id}@kiosk.local",
-        role="store_admin",
-        store_id=device.store_id,
-        is_active=True,
-        created_at=datetime.utcnow()
+    # 3. Invalid ID
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid ID. Please check and try again.",
     )
-    
-    access_token = create_access_token(data={"sub": user.id, "role": user.role, "store_id": user.store_id})
-    refresh_token = create_refresh_token(data={"sub": user.id, "role": user.role, "store_id": user.store_id})
-    
-    return {
-        "success": True,
-        "tokens": {"access": access_token, "refresh": refresh_token},
-        "user": user
-    }
 
-@router.get("/profile", response_model=UserResponse)
-async def read_users_me(current_user = Depends(get_current_user)):
-    return current_user
+@router.get("/profile")
+async def get_profile():
+    # Deprecated/Simplify since we just decode token in frontend
+    return {"status": "ok"}

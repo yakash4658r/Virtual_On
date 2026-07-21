@@ -91,6 +91,41 @@ async def start_tryon(
     saree = result.scalars().first()
     if not saree:
         raise HTTPException(status_code=404, detail="Saree not found")
+        
+    actual_store_id = store_id or saree.store_id
+    
+    # -----------------------------------------------------
+    # SUBSCRIPTION & CREDIT LIMIT LOGIC
+    # -----------------------------------------------------
+    from sqlalchemy import func
+    
+    # Get store
+    store_res = await db.execute(select(Store).where(Store.id == actual_store_id))
+    store = store_res.scalars().first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+        
+    # Reset daily counter if new day
+    today = datetime.utcnow().date()
+    if store.last_reset_date and store.last_reset_date.date() < today:
+        store.photos_used_today = 0
+        store.last_reset_date = datetime.utcnow()
+    elif not store.last_reset_date:
+        store.last_reset_date = datetime.utcnow()
+        
+    # Check plan limit
+    if store.daily_limit != -1:
+        if store.photos_used_today >= store.daily_limit:
+            raise HTTPException(status_code=429, detail="Daily limit reached. Upgrade plan.")
+            
+    # Check credits
+    if store.credits_remaining < store.credits_per_swap:
+        raise HTTPException(status_code=402, detail="Insufficient credits. Please recharge.")
+        
+    # Deduct credits
+    store.credits_remaining -= store.credits_per_swap
+    store.photos_used_today += 1
+    # -----------------------------------------------------
     
     # Create TryOnSession
     session = TryOnSession(
@@ -98,7 +133,7 @@ async def start_tryon(
         saree_id=saree_id,
         customer_image=customer_photo_url,
         device_id=device_id,
-        store_id=store_id or saree.store_id,
+        store_id=actual_store_id,
         status="processing",
         ai_provider="mock",
         expires_at=datetime.utcnow() + timedelta(hours=24)

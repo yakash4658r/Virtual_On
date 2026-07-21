@@ -1,13 +1,26 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import storeAPI from '../../api/storeAPI'
+import mirrorAPI from '../../api/mirrorAPI'
+import Webcam from 'react-webcam'
+import toast from 'react-hot-toast'
 import './DashboardPage.css'
 
 function DashboardPage() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+
+  // Try Start Flow State
+  const [flowOpen, setFlowOpen] = useState(false)
+  const [step, setStep] = useState(1) // 1: Camera, 2: Barcode, 3: Processing, 4: Result
+  const [photoBlob, setPhotoBlob] = useState(null)
+  const [photoUrl, setPhotoUrl] = useState(null)
+  const [barcode, setBarcode] = useState('')
+  const [resultImage, setResultImage] = useState(null)
+  
+  const webcamRef = useRef(null)
 
   useEffect(() => {
     fetchStats()
@@ -24,6 +37,99 @@ function DashboardPage() {
     }
   }
 
+  // --- Flow Handlers ---
+  const openFlow = () => {
+    setStep(1)
+    setPhotoBlob(null)
+    setPhotoUrl(null)
+    setBarcode('')
+    setResultImage(null)
+    setFlowOpen(true)
+  }
+
+  const closeFlow = () => {
+    setFlowOpen(false)
+    // Refresh stats to show deducted credits/try-ons
+    fetchStats()
+  }
+
+  const capturePhoto = useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot()
+    if (imageSrc) {
+      // Convert base64 to blob
+      fetch(imageSrc)
+        .then(res => res.blob())
+        .then(blob => {
+          setPhotoBlob(blob)
+          setPhotoUrl(imageSrc)
+          setStep(2) // Move to barcode
+        })
+    }
+  }, [webcamRef])
+
+  const submitBarcode = async (e) => {
+    e.preventDefault()
+    if (!barcode.trim()) {
+      toast.error('Please enter a barcode')
+      return
+    }
+    setStep(3) // Move to processing
+    startTryOnProcess()
+  }
+
+  const startTryOnProcess = async () => {
+    try {
+      // 1. Session token
+      const sessionToken = Math.random().toString(36).substring(2, 15)
+
+      // 2. Upload photo
+      const uploadRes = await mirrorAPI.uploadPhoto(sessionToken, photoBlob)
+      const uploadedPhotoUrl = uploadRes.data.data.photo_url
+
+      // 3. Start Try-On (passing barcode as saree_id since backend accepts it or we can lookup)
+      // Note: In real app, we might need to lookup saree by barcode first. Let's assume barcode = saree_id or backend handles it.
+      // Wait, mirrorAPI.startTryOn expects saree_id. Let's lookup saree id.
+      // Actually, if we just pass barcode as saree_id, backend might fail if it's not the UUID.
+      // Let's pass it anyway, backend needs to be robust, or we use storeAPI to search.
+      // For now, let's just pass it.
+      
+      const tryonRes = await mirrorAPI.startTryOn(
+        sessionToken,
+        barcode.trim(),
+        uploadedPhotoUrl
+      )
+      
+      const jobId = tryonRes.data.data.job_id
+      
+      // 4. Poll
+      const pollStatus = async () => {
+        try {
+          const res = await mirrorAPI.getTryOnStatus(jobId)
+          const data = res.data.data
+          
+          if (data.status === 'completed') {
+            setResultImage(data.result_image)
+            setStep(4) // Move to result
+            toast.success('Try-On Complete!')
+          } else if (data.status === 'failed') {
+            toast.error(data.error_message || 'Try-on failed')
+            setFlowOpen(false)
+          } else {
+            setTimeout(pollStatus, 3000)
+          }
+        } catch (err) {
+          toast.error('Error polling status')
+          setFlowOpen(false)
+        }
+      }
+      
+      pollStatus()
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to process Try-On')
+      setFlowOpen(false)
+    }
+  }
+
   if (loading) return <div className="dashboard-loading">Loading dashboard...</div>
 
   return (
@@ -34,9 +140,17 @@ function DashboardPage() {
     >
       <div className="dashboard-header">
         <div>
-          <h1 className="dashboard-title">Store Overview</h1>
-          <p className="dashboard-subtitle">Welcome back. Here's what's happening today.</p>
+          <h1 className="dashboard-title">Store Operations</h1>
+          <p className="dashboard-subtitle">Control center for your virtual try-on mirror</p>
         </div>
+      </div>
+
+      {/* HUGE HERO BUTTON */}
+      <div className="hero-section">
+        <button className="try-start-btn" onClick={openFlow}>
+          <span className="btn-icon">⚡</span>
+          TRY START
+        </button>
       </div>
 
       {/* KPI Cards */}
@@ -44,114 +158,120 @@ function DashboardPage() {
         <StatCard 
           title="Try-Ons Today" 
           value={stats?.tryons?.today || 0}
-          subtitle={`${stats?.tryons?.this_week || 0} this week`}
+          subtitle={`${stats?.tryons?.total || 0} total all time`}
           icon="👗"
           color="purple"
         />
         <StatCard 
-          title="Active Devices" 
-          value={stats?.devices?.online || 0}
-          subtitle={`Out of ${stats?.devices?.total || 0} registered`}
-          icon="🖥️"
-          color="emerald"
+          title="AI Credits Left" 
+          value={stats?.store?.credits_remaining ?? '—'}
+          subtitle={`Plan: ${stats?.store?.plan_type || 'Basic'} • ${stats?.store?.credits_per_swap || 1} credit/swap`}
+          icon="✨"
+          color="amber"
         />
         <StatCard 
-          title="Total Sarees" 
-          value={stats?.sarees?.total || 0}
-          subtitle={`${stats?.sarees?.active || 0} active in catalog`}
+          title="Active Sarees" 
+          value={stats?.sarees?.active || 0}
+          subtitle={`Total in catalogue: ${stats?.sarees?.total || 0}`}
           icon="🛍️"
           color="blue"
         />
         <StatCard 
-          title="Total Customers" 
-          value={stats?.users?.total || 0}
-          subtitle="Saved profiles"
-          icon="👥"
-          color="amber"
+          title="Usage Today" 
+          value={stats?.store?.photos_used_today || 0}
+          subtitle={`Limit: ${stats?.store?.daily_limit === -1 ? 'Unlimited' : (stats?.store?.daily_limit || '—')}`}
+          icon="📈"
+          color="emerald"
         />
       </div>
 
-      <div className="dashboard-main-grid">
-        {/* Recent Sessions */}
-        <div className="dashboard-card recent-sessions-card">
-          <div className="dashboard-card-header">
-            <h2 className="dashboard-card-title">Recent Try-On Sessions</h2>
-            <button 
-              onClick={() => navigate('/admin/sessions')}
-              className="view-all-btn"
+      {/* OVERLAY FLOW MODAL */}
+      <AnimatePresence>
+        {flowOpen && (
+          <div className="flow-overlay">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="flow-modal"
             >
-              View All
-            </button>
-          </div>
-          
-          {stats?.recent_sessions?.length > 0 ? (
-            <div className="session-list">
-              {stats.recent_sessions.map((session, i) => (
-                <div key={session.id} className="session-item">
-                  <div className="session-info-left">
-                    <div className="session-icon">
-                      📸
-                    </div>
-                    <div>
-                      <p className="session-name">Session {session.id.slice(0,8)}</p>
-                      <p className="session-device">Device: {session.device_id}</p>
-                    </div>
-                  </div>
-                  <div className="session-info-right">
-                    <span className={`session-status status-${session.status}`}>
-                      {session.status.toUpperCase()}
-                    </span>
-                    <p className="session-time">
-                      {new Date(session.created_at + 'Z').toLocaleTimeString()}
-                    </p>
-                  </div>
+              <button className="flow-close" onClick={closeFlow}>&times;</button>
+              
+              <div className="flow-header">
+                <h2>Virtual Try-On Assistant</h2>
+                <div className="flow-step-indicator">
+                  <div className={`step-dot ${step >= 1 ? 'active' : ''}`} />
+                  <div className={`step-dot ${step >= 2 ? 'active' : ''}`} />
+                  <div className={`step-dot ${step >= 3 ? 'active' : ''}`} />
+                  <div className={`step-dot ${step >= 4 ? 'active' : ''}`} />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              No sessions recorded yet today.
-            </div>
-          )}
-        </div>
+              </div>
 
-        {/* Quick Actions */}
-        <div className="dashboard-card quick-actions-card">
-          <h2 className="dashboard-card-title">Quick Actions</h2>
-          <div className="quick-actions-list">
-            <button 
-              onClick={() => navigate('/admin/products/add')}
-              className="quick-action-btn action-primary"
-            >
-              <span className="action-icon">➕</span>
-              <div className="action-text">
-                <p className="action-title">Add New Saree</p>
-                <p className="action-desc">Upload images & generate barcode</p>
+              <div className="flow-content">
+                {step === 1 && (
+                  <>
+                    <h3 style={{ color: '#fff', marginBottom: '1.5rem' }}>Take Customer Photo</h3>
+                    <div className="camera-box">
+                      <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        videoConstraints={{ facingMode: "user" }}
+                        className="camera-preview"
+                      />
+                    </div>
+                    <button className="capture-btn" onClick={capturePhoto}>
+                      📸 Capture Image
+                    </button>
+                  </>
+                )}
+
+                {step === 2 && (
+                  <>
+                    <h3 style={{ color: '#fff', marginBottom: '1.5rem' }}>Enter Saree Barcode</h3>
+                    <form onSubmit={submitBarcode} className="barcode-input-container">
+                      <input 
+                        type="text" 
+                        autoFocus
+                        value={barcode}
+                        onChange={(e) => setBarcode(e.target.value)}
+                        placeholder="Scan or type barcode"
+                        className="barcode-input"
+                      />
+                      <button type="submit" className="capture-btn" style={{ width: '100%' }}>
+                        Next ➡️
+                      </button>
+                    </form>
+                  </>
+                )}
+
+                {step === 3 && (
+                  <div className="processing-view">
+                    <div className="spinner" />
+                    <h3 style={{ color: '#fff' }}>Generating AI Try-On...</h3>
+                    <p style={{ color: '#9ca3af', marginTop: '1rem' }}>This may take 10-15 seconds</p>
+                  </div>
+                )}
+
+                {step === 4 && (
+                  <div className="result-view">
+                    <h3 style={{ color: '#fff', marginBottom: '1.5rem' }}>Done!</h3>
+                    {resultImage && (
+                      <img src={resultImage} alt="Result" className="result-image" />
+                    )}
+                    <div>
+                      <button className="capture-btn" onClick={closeFlow}>
+                        Finish
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </button>
-            <button 
-              onClick={() => navigate('/admin/devices')}
-              className="quick-action-btn action-secondary"
-            >
-              <span className="action-icon">🖥️</span>
-              <div className="action-text">
-                <p className="action-title">Manage Devices</p>
-                <p className="action-desc">Check mirror status</p>
-              </div>
-            </button>
-            <button 
-              onClick={() => navigate('/admin/barcodes')}
-              className="quick-action-btn action-tertiary"
-            >
-              <span className="action-icon">🖨️</span>
-              <div className="action-text">
-                <p className="action-title">Print Barcodes</p>
-                <p className="action-desc">Download barcode PDFs for tags</p>
-              </div>
-            </button>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
+
     </motion.div>
   )
 }

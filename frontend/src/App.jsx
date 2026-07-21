@@ -20,16 +20,22 @@ import MirrorEntryPage from './pages/public/MirrorEntryPage'
 
 // Admin Pages
 import DashboardPage from './pages/admin/DashboardPage'
+import VirtualStudioPage from './pages/admin/VirtualStudioPage'
 import ProductListPage from './pages/admin/ProductListPage'
 import ProductAddPage from './pages/admin/ProductAddPage'
 import ProductEditPage from './pages/admin/ProductEditPage'
 import BarcodeListPage from './pages/admin/BarcodeListPage'
-import TryOnHistoryPage from './pages/admin/TryOnHistoryPage'
 import AnalyticsDashboardPage from './pages/admin/AnalyticsDashboardPage'
 import SessionGalleryPage from './pages/admin/SessionGalleryPage'
-import DeviceManagePage from './pages/admin/DeviceManagePage'
 import CategoryManagePage from './pages/admin/CategoryManagePage'
 import StoreSettingsPage from './pages/admin/StoreSettingsPage'
+
+// Kiosk Pages
+import KioskLayout from './pages/kiosk/KioskLayout'
+import KioskWelcomeScreen from './pages/kiosk/KioskWelcomeScreen'
+import KioskCameraScreen from './pages/kiosk/KioskCameraScreen'
+import KioskTryOnScreen from './pages/kiosk/KioskTryOnScreen'
+import KioskSummaryScreen from './pages/kiosk/KioskSummaryScreen'
 
 // Mirror Kiosk Pages
 import WelcomeScreen from './pages/mirror/WelcomeScreen'
@@ -44,14 +50,11 @@ import './App.css'
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth()
-
+  const { isAuthenticated, user, loading } = useAuth()
   if (loading) return null
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />
-  }
-
+  if (!isAuthenticated) return <Navigate to="/" replace />
+  // Strict block: Super admin cannot access store admin panel
+  if (user?.role === 'super_admin') return <Navigate to="/superadmin" replace />
   return children
 }
 
@@ -71,7 +74,7 @@ function AppRoutes() {
       {/* Root Entry Route */}
       <Route path="/" element={
         isAuthenticated 
-          ? (isSuperAdmin ? <Navigate to="/superadmin" replace /> : <Navigate to={`/mirror/${localStorage.getItem('deviceId') || 'default'}`} replace />)
+          ? (isSuperAdmin ? <Navigate to="/superadmin" replace /> : <Navigate to="/admin" replace />)
           : <MirrorEntryPage />
       } />
 
@@ -86,19 +89,26 @@ function AppRoutes() {
         <Route path="result" element={<ResultScreen />} />
       </Route>
 
-      {/* ========== ADMIN ROUTES ========== */}
+      {/* ========== CUSTOMER KIOSK ROUTES ========== */}
+      <Route element={<ProtectedRoute><KioskLayout /></ProtectedRoute>}>
+        <Route path="/admin" element={<KioskWelcomeScreen />} />
+        <Route path="/admin/camera" element={<KioskCameraScreen />} />
+        <Route path="/admin/tryon" element={<KioskTryOnScreen />} />
+        <Route path="/admin/summary" element={<KioskSummaryScreen />} />
+      </Route>
+
+      {/* ========== STORE OWNER BACKEND ========== */}
       <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-        <Route path="/admin" element={<DashboardPage />} />
-        <Route path="/admin/analytics" element={<AnalyticsDashboardPage />} />
-        <Route path="/admin/sessions" element={<SessionGalleryPage />} />
-        <Route path="/admin/devices" element={<DeviceManagePage />} />
-        <Route path="/admin/products" element={<ProductListPage />} />
-        <Route path="/admin/products/add" element={<ProductAddPage />} />
-        <Route path="/admin/products/edit/:id" element={<ProductEditPage />} />
-        <Route path="/admin/barcodes" element={<BarcodeListPage />} />
-        <Route path="/admin/tryon-history" element={<TryOnHistoryPage />} />
-        <Route path="/admin/categories" element={<CategoryManagePage />} />
-        <Route path="/admin/settings" element={<StoreSettingsPage />} />
+        <Route path="/admin/manage" element={<DashboardPage />} />
+        <Route path="/admin/manage/studio" element={<VirtualStudioPage />} />
+        <Route path="/admin/manage/analytics" element={<AnalyticsDashboardPage />} />
+        <Route path="/admin/manage/sessions" element={<SessionGalleryPage />} />
+        <Route path="/admin/manage/products" element={<ProductListPage />} />
+        <Route path="/admin/manage/products/add" element={<ProductAddPage />} />
+        <Route path="/admin/manage/products/edit/:id" element={<ProductEditPage />} />
+        <Route path="/admin/manage/barcodes" element={<BarcodeListPage />} />
+        <Route path="/admin/manage/categories" element={<CategoryManagePage />} />
+        <Route path="/admin/manage/settings" element={<StoreSettingsPage />} />
       </Route>
 
       {/* ========== SUPER ADMIN ROUTES ========== */}
@@ -106,6 +116,7 @@ function AppRoutes() {
         <Route path="/superadmin" element={<StoresDashboard />} />
         <Route path="/superadmin/stores" element={<StoresDashboard />} />
         <Route path="/superadmin/stores/new" element={<CreateEditStore />} />
+        <Route path="/superadmin/stores/edit/:id" element={<CreateEditStore />} />
         <Route path="/superadmin/devices" element={<DeviceRegistration />} />
         <Route path="/superadmin/analytics" element={<GlobalAnalytics />} />
       </Route>

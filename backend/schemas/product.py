@@ -57,18 +57,36 @@ class SareeUpdate(BaseModel):
 class SareeListResponse(SareeBase):
     id: str
     category_name: Optional[str] = None
+    image_url: Optional[str] = None  # Computed from image_front
     
     class Config:
         from_attributes = True
+    
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        instance = super().model_validate(obj, *args, **kwargs)
+        # Derive image_url from image_front
+        if not instance.image_url and instance.image_front:
+            instance.image_url = instance.image_front
+        return instance
 
 class SareeDetailResponse(SareeBase):
     id: str
-    category: CategoryResponse
-    created_at: datetime
+    category: Optional[CategoryResponse] = None
+    created_at: Optional[datetime] = None
     all_images: List[str] = []
+    image_url: Optional[str] = None  # Computed: first non-null image
     
     class Config:
         from_attributes = True
+    
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        instance = super().model_validate(obj, *args, **kwargs)
+        # Derive image_url
+        if not instance.image_url:
+            instance.image_url = instance.image_front or instance.tryon_image or instance.image_back
+        return instance
 
 class PaginationResponse(BaseModel):
     total: int

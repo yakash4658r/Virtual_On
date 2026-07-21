@@ -74,7 +74,7 @@ async def add_process_time_header(request: Request, call_next):
 
 # ─── Import & Register Routers ────────────────────────────────────────────
 
-from routers import auth, products, cart, tryon, store, mirror, devices, superadmin, public
+from routers import auth, products, cart, tryon, store, mirror, devices, superadmin, public, kiosk
 
 # Auth
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
@@ -91,8 +91,11 @@ app.include_router(tryon.router, prefix=f"{settings.API_V1_STR}/tryon", tags=["t
 # Store Admin Dashboard & Analytics
 app.include_router(store.router, prefix=f"{settings.API_V1_STR}/store", tags=["store"])
 
-# Mirror Kiosk (NO AUTH)
+# Mirror Kiosk (Legacy)
 app.include_router(mirror.router, prefix=f"{settings.API_V1_STR}/mirror", tags=["mirror"])
+
+# Customer Kiosk (New)
+app.include_router(kiosk.router, prefix=f"{settings.API_V1_STR}/kiosk", tags=["kiosk"])
 
 # Device Management
 app.include_router(devices.router, prefix=f"{settings.API_V1_STR}/devices", tags=["devices"])

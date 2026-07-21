@@ -1,28 +1,60 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import superadminAPI from '../../api/superadminAPI'
 import toast from 'react-hot-toast'
 import '../../layouts/SuperAdminLayout.css'
 
 function CreateEditStore() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const isEdit = Boolean(id)
+  
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(isEdit)
   const [formData, setFormData] = useState({
     store_name: '',
-    store_code: '',
+    owner_name: '',
     owner_email: '',
+    owner_phone: '',
     address: '',
-    phone: '',
-    subscription_plan: 'starter',
-    ai_credits_remaining: 100,
+    plan_type: 'starter',
+    initial_credits: 100,
   })
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'ai_credits_remaining' ? parseInt(value) || 0 : value,
+      [name]: type === 'checkbox' ? checked : (name === 'initial_credits' ? parseInt(value) || 0 : value),
     }))
+  }
+
+  useEffect(() => {
+    if (isEdit) {
+      loadStore()
+    }
+  }, [id])
+
+  const loadStore = async () => {
+    try {
+      const res = await superadminAPI.getStoreById(id)
+      const data = res.data.data
+      setFormData({
+        store_name: data.store_name || '',
+        owner_name: data.owner_name || '',
+        owner_email: data.owner_email || '',
+        owner_phone: data.owner_phone || '',
+        address: data.address || '',
+        plan_type: data.plan_type || 'starter',
+        initial_credits: data.credits_remaining || 0,
+        is_active: data.is_active !== false,
+      })
+    } catch (err) {
+      toast.error('Failed to load store')
+      navigate('/superadmin/stores')
+    } finally {
+      setInitialLoading(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -32,10 +64,6 @@ function CreateEditStore() {
       toast.error('Store name is required')
       return
     }
-    if (!formData.store_code.trim()) {
-      toast.error('Store code is required')
-      return
-    }
     if (!formData.owner_email.trim()) {
       toast.error('Owner email is required')
       return
@@ -43,22 +71,38 @@ function CreateEditStore() {
 
     setLoading(true)
     try {
-      await superadminAPI.createStore(formData)
-      toast.success('Store created successfully!')
+      if (isEdit) {
+        const updateData = {
+          store_name: formData.store_name,
+          owner_name: formData.owner_name,
+          owner_phone: formData.owner_phone,
+          address: formData.address,
+          plan_type: formData.plan_type
+        }
+        await superadminAPI.updateStore(id, updateData)
+        toast.success('Store updated successfully!')
+      } else {
+        await superadminAPI.createStore(formData)
+        toast.success('Store created successfully! Activation Code generated.')
+      }
       navigate('/superadmin/stores')
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Failed to create store'
+      const msg = err.response?.data?.detail || 'Failed to save store'
       toast.error(msg)
     } finally {
       setLoading(false)
     }
   }
 
+  if (initialLoading) {
+    return <div className="sa-page"><p style={{padding: '24px'}}>Loading...</p></div>
+  }
+
   return (
     <div className="sa-page">
       <div className="sa-page-header">
-        <h1 className="sa-page-title">Create New Store</h1>
-        <p className="sa-page-subtitle">Register a new tenant store on the platform</p>
+        <h1 className="sa-page-title">{isEdit ? 'Edit Store' : 'Create New Store'}</h1>
+        <p className="sa-page-subtitle">{isEdit ? 'Update tenant details' : 'Register a new tenant store (Activation Code will be auto-generated)'}</p>
       </div>
 
       <div className="sa-table-wrap" style={{ padding: '28px' }}>
@@ -76,87 +120,89 @@ function CreateEditStore() {
               />
             </div>
             <div className="sa-form-group">
-              <label className="sa-form-label">Store Code * (unique, short)</label>
+              <label className="sa-form-label">Owner Name</label>
               <input
                 type="text"
-                name="store_code"
+                name="owner_name"
                 className="sa-form-input"
-                placeholder="e.g., LKSHMI"
-                value={formData.store_code}
+                placeholder="Owner full name"
+                value={formData.owner_name}
                 onChange={handleChange}
-                maxLength={10}
-                style={{ textTransform: 'uppercase' }}
               />
             </div>
           </div>
 
-          <div className="sa-form-group">
-            <label className="sa-form-label">Owner Email *</label>
-            <input
-              type="email"
-              name="owner_email"
-              className="sa-form-input"
-              placeholder="owner@store.com"
-              value={formData.owner_email}
-              onChange={handleChange}
-            />
-          </div>
-
           <div className="sa-form-row">
             <div className="sa-form-group">
-              <label className="sa-form-label">Address</label>
+              <label className="sa-form-label">Owner Email *</label>
               <input
-                type="text"
-                name="address"
+                type="email"
+                name="owner_email"
                 className="sa-form-input"
-                placeholder="123 Silk Street, Chennai"
-                value={formData.address}
+                placeholder="owner@store.com"
+                value={formData.owner_email}
                 onChange={handleChange}
+                disabled={isEdit}
               />
             </div>
             <div className="sa-form-group">
               <label className="sa-form-label">Phone</label>
               <input
                 type="text"
-                name="phone"
+                name="owner_phone"
                 className="sa-form-input"
                 placeholder="+91 9876543210"
-                value={formData.phone}
+                value={formData.owner_phone}
                 onChange={handleChange}
               />
             </div>
+          </div>
+
+          <div className="sa-form-group">
+            <label className="sa-form-label">Address</label>
+            <input
+              type="text"
+              name="address"
+              className="sa-form-input"
+              placeholder="123 Silk Street, Chennai"
+              value={formData.address}
+              onChange={handleChange}
+            />
           </div>
 
           <div className="sa-form-row">
             <div className="sa-form-group">
               <label className="sa-form-label">Subscription Plan</label>
               <select
-                name="subscription_plan"
+                name="plan_type"
                 className="sa-form-select"
-                value={formData.subscription_plan}
+                value={formData.plan_type}
                 onChange={handleChange}
               >
-                <option value="starter">Starter</option>
-                <option value="professional">Professional</option>
-                <option value="enterprise">Enterprise</option>
+                <option value="basic">Basic (250/day)</option>
+                <option value="pro">Pro (500/day)</option>
+                <option value="unlimited">Unlimited</option>
               </select>
             </div>
-            <div className="sa-form-group">
-              <label className="sa-form-label">AI Credits</label>
-              <input
-                type="number"
-                name="ai_credits_remaining"
-                className="sa-form-input"
-                value={formData.ai_credits_remaining}
-                onChange={handleChange}
-                min={0}
-              />
-            </div>
+            
+            {!isEdit && (
+              <div className="sa-form-group">
+                <label className="sa-form-label">Initial Credits</label>
+                <input
+                  type="number"
+                  name="initial_credits"
+                  className="sa-form-input"
+                  value={formData.initial_credits}
+                  onChange={handleChange}
+                  min={0}
+                />
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
             <button type="submit" className="sa-btn primary" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Store'}
+              {loading ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Store')}
             </button>
             <button
               type="button"

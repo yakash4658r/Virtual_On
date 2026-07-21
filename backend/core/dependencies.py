@@ -9,8 +9,13 @@ from core.database import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
-    from models.user import User
+class CurrentUser:
+    def __init__(self, user_id: str, role: str, store_id: str = None):
+        self.id = user_id
+        self.role = role
+        self.store_id = store_id
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -22,34 +27,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         role: str = payload.get("role")
         store_id: str = payload.get("store_id")
         
-        if user_id is None:
+        if user_id is None or role is None:
             raise credentials_exception
             
-        # Handle Super Admin pseudo-user
-        if role == "super_admin" and user_id == "superadmin-1":
-            from models.user import User
-            from datetime import datetime
-            return User(id="superadmin-1", name="Super Admin", email="admin@virtualon.com", role="super_admin", is_active=True, created_at=datetime.utcnow())
-            
-        # Handle Kiosk pseudo-user (which gets store_admin role)
-        if role == "store_admin" and "@kiosk.local" in payload.get("sub", "") or (store_id and user_id != "superadmin-1"):
-            # A bit of heuristic: if they have a store_id and aren't superadmin, we can just let them through as kiosk
-            # Actually, to be safe, we just check if it's the kiosk email format or assume any token with a store_id is valid
-            from models.user import User
-            from datetime import datetime
-            return User(id=user_id, name="Kiosk User", email=f"{user_id}@kiosk.local", role="store_admin", store_id=store_id, is_active=True, created_at=datetime.utcnow())
+        return CurrentUser(user_id=user_id, role=role, store_id=store_id)
             
     except JWTError:
         raise credentials_exception
-        
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalars().first()
-    
-    if user is None:
-        raise credentials_exception
-    if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return user
 
 async def get_current_active_admin(current_user = Depends(get_current_user)):
     """Store admin or super admin"""
@@ -63,8 +47,17 @@ async def get_current_super_admin(current_user = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Super admin access required")
     return current_user
 
-async def get_current_store_id(current_user = Depends(get_current_active_admin)):
-    """Extract store_id from the current admin user"""
-    if not current_user.store_id:
-        raise HTTPException(status_code=400, detail="User not assigned to a store")
-    return current_user.store_id
+async def get_current_store_id(current_user = Depends(get_current_active_admin), db: AsyncSession = Depends(get_db)):
+    """Extract store_id from the current admin user. For Super Admin, fall back to first store."""
+    if current_user.store_id:
+        return current_user.store_id
+    
+    # Super Admin doesn't have a store_id — use the first active store
+    if current_user.role == 'super_admin':
+        from models.store import Store
+        result = await db.execute(select(Store).where(Store.is_active == True).limit(1))
+        store = result.scalars().first()
+        if store:
+            return store.id
+    
+    raise HTTPException(status_code=400, detail="User not assigned to a store")

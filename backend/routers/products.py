@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
 from core.database import get_db
-from core.dependencies import get_current_active_admin
+from core.dependencies import get_current_active_admin, get_current_store_id
 from models.product import Category, Saree
 from schemas.product import CategoryResponse, SareeListResponse, SareeDetailResponse, SareeCreate, SareePaginatedResponse, PaginationResponse
 from services.product_service import create_saree, get_sarees
@@ -75,7 +75,8 @@ async def add_saree(
     image_front: UploadFile = File(None),
     tryon_image: UploadFile = File(None),
     db: AsyncSession = Depends(get_db),
-    admin = Depends(get_current_active_admin)
+    admin = Depends(get_current_active_admin),
+    store_id: str = Depends(get_current_store_id)
 ):
     from utils.image import process_upload_file
     
@@ -93,7 +94,7 @@ async def add_saree(
         tryon_image=tryon_img_url
     )
     
-    saree = await create_saree(db, saree_in)
+    saree = await create_saree(db, saree_in, store_id=store_id)
     return {"success": True, "message": "Saree created", "data": saree}
 
 @router.get("/admin/list/", response_model=dict)
@@ -101,11 +102,12 @@ async def list_sarees_admin(
     page: int = 1, 
     page_size: int = 20, 
     db: AsyncSession = Depends(get_db),
-    admin = Depends(get_current_active_admin)
+    admin = Depends(get_current_active_admin),
+    store_id: str = Depends(get_current_store_id)
 ):
     skip = (page - 1) * page_size
-    # In a real app we fetch all (active + inactive) for admin
-    sarees = await get_sarees(db, skip=skip, limit=page_size)
+    # Fetch sarees for this store
+    sarees = await get_sarees(db, skip=skip, limit=page_size, store_id=store_id)
     total = len(sarees)
     
     # We need to return category object inside
@@ -132,9 +134,10 @@ async def list_sarees_admin(
 @router.get("/admin/barcodes/all/", response_model=dict)
 async def get_all_barcodes(
     db: AsyncSession = Depends(get_db),
-    admin = Depends(get_current_active_admin)
+    admin = Depends(get_current_active_admin),
+    store_id: str = Depends(get_current_store_id)
 ):
-    sarees = await get_sarees(db, skip=0, limit=100) # Mock limit
+    sarees = await get_sarees(db, skip=0, limit=100, store_id=store_id)
     data = []
     for s in sarees:
         data.append({
@@ -181,3 +184,37 @@ async def delete_saree(
     await db.delete(saree)
     await db.commit()
     return {"success": True, "message": "Saree deleted"}
+
+@router.post("/admin/categories/create/", response_model=dict)
+async def create_category(
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    admin = Depends(get_current_active_admin)
+):
+    """Create a new category"""
+    from slugify import slugify
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Category name is required")
+    
+    slug = slugify(name)
+    # Check unique slug
+    result = await db.execute(select(Category).where(Category.slug == slug))
+    if result.scalars().first():
+        raise HTTPException(status_code=400, detail="Category with this name already exists")
+    
+    category = Category(
+        name=name,
+        slug=slug,
+        description=data.get("description", ""),
+    )
+    db.add(category)
+    await db.commit()
+    await db.refresh(category)
+    
+    return {"success": True, "message": "Category created", "data": {
+        "id": category.id,
+        "name": category.name,
+        "slug": category.slug
+    }}
+

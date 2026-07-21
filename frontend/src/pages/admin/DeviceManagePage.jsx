@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import deviceAPI from '../../api/deviceAPI'
+import './DeviceManagePage.css'
 
 function DeviceManagePage() {
   const [devices, setDevices] = useState([])
@@ -63,16 +64,16 @@ function DeviceManagePage() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-6 max-w-6xl mx-auto"
+      className="device-page-container"
     >
-      <div className="flex justify-between items-center mb-8">
+      <div className="device-page-header">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Smart Mirrors</h1>
-          <p className="text-gray-500 mt-1">Manage kiosk devices in your store</p>
+          <h1 className="device-page-title">Smart Mirrors</h1>
+          <p className="device-page-subtitle">Manage kiosk devices in your store</p>
         </div>
         <button 
           onClick={() => setShowForm(!showForm)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+          className="device-btn-primary"
         >
           {showForm ? 'Cancel' : '+ Register Device'}
         </button>
@@ -82,44 +83,44 @@ function DeviceManagePage() {
         <motion.div 
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8"
+          className="device-form-card"
         >
-          <h2 className="text-xl font-semibold mb-4">Register New Device</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Device ID (Unique Code)</label>
+          <h2 className="device-form-title">Register New Device</h2>
+          <form onSubmit={handleSubmit} className="device-form-grid">
+            <div className="device-form-group">
+              <label className="device-form-label">Device ID (Unique Code)</label>
               <input
                 required
                 type="text"
                 placeholder="e.g. MIRROR-FRONT-01"
-                className="w-full border-gray-300 rounded-lg p-3 border focus:ring-indigo-500 focus:border-indigo-500"
+                className="device-form-input"
                 value={formData.device_id}
                 onChange={e => setFormData({...formData, device_id: e.target.value.toUpperCase()})}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Device Name</label>
+            <div className="device-form-group">
+              <label className="device-form-label">Device Name</label>
               <input
                 required
                 type="text"
                 placeholder="e.g. Main Entrance Mirror"
-                className="w-full border-gray-300 rounded-lg p-3 border focus:ring-indigo-500 focus:border-indigo-500"
+                className="device-form-input"
                 value={formData.device_name}
                 onChange={e => setFormData({...formData, device_name: e.target.value})}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location in Store</label>
+            <div className="device-form-group">
+              <label className="device-form-label">Location in Store</label>
               <input
                 type="text"
                 placeholder="e.g. Ground Floor, Left Wing"
-                className="w-full border-gray-300 rounded-lg p-3 border focus:ring-indigo-500 focus:border-indigo-500"
+                className="device-form-input"
                 value={formData.location}
                 onChange={e => setFormData({...formData, location: e.target.value})}
               />
             </div>
-            <div className="md:col-span-3 flex justify-end">
-              <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium">
+            <div className="device-form-actions">
+              <button type="submit" className="device-btn-primary">
                 Register
               </button>
             </div>
@@ -128,47 +129,47 @@ function DeviceManagePage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12">Loading devices...</div>
+        <div className="device-loading">Loading devices...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="device-grid">
           {devices.map(device => {
             const online = isOnline(device.last_seen)
             return (
               <motion.div 
                 whileHover={{ y: -5 }}
                 key={device.id} 
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden"
+                className="device-card"
               >
-                <div className={`absolute top-0 left-0 w-full h-2 ${online ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div className={`device-status-bar ${online ? 'bar-online' : 'bar-offline'}`} />
                 
-                <div className="flex justify-between items-start mb-4 mt-2">
-                  <h3 className="text-xl font-bold text-gray-800">{device.device_name}</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${online ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                <div className="device-card-header">
+                  <h3 className="device-card-title">{device.device_name}</h3>
+                  <span className={`device-status-badge ${online ? 'badge-online' : 'badge-offline'}`}>
                     {online ? 'Online' : 'Offline'}
                   </span>
                 </div>
                 
-                <div className="space-y-3 text-sm text-gray-600">
-                  <p className="flex justify-between">
+                <div className="device-info-list">
+                  <p className="device-info-row">
                     <span>Device ID:</span>
-                    <span className="font-mono font-medium text-gray-900">{device.device_id}</span>
+                    <span className="device-info-value mono">{device.device_id}</span>
                   </p>
-                  <p className="flex justify-between">
+                  <p className="device-info-row">
                     <span>Location:</span>
-                    <span className="font-medium text-gray-900">{device.location || 'N/A'}</span>
+                    <span className="device-info-value">{device.location || 'N/A'}</span>
                   </p>
-                  <p className="flex justify-between">
+                  <p className="device-info-row">
                     <span>Last Seen:</span>
-                    <span className="font-medium text-gray-900">{getTimeAgo(device.last_seen)}</span>
+                    <span className="device-info-value">{getTimeAgo(device.last_seen)}</span>
                   </p>
                 </div>
                 
-                <div className="mt-6 pt-6 border-t border-gray-100 flex justify-between items-center">
+                <div className="device-card-footer">
                   <a 
                     href={`/mirror/${device.device_id}`} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center gap-1"
+                    className="device-link"
                   >
                     Open Kiosk Mode ↗
                   </a>
@@ -178,9 +179,9 @@ function DeviceManagePage() {
           })}
           
           {devices.length === 0 && !showForm && (
-            <div className="col-span-full text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">No devices registered</h3>
-              <p className="text-gray-500 mt-1">Register a device to start using the smart mirror app.</p>
+            <div className="device-empty-state">
+              <h3 className="device-empty-title">No devices registered</h3>
+              <p className="device-empty-subtitle">Register a device to start using the smart mirror app.</p>
             </div>
           )}
         </div>

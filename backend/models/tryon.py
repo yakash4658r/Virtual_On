@@ -42,3 +42,32 @@ class TryOnSession(Base):
     saree = relationship("Saree")
     device = relationship("Device")
     store = relationship("Store")
+
+class CustomerSession(Base):
+    __tablename__ = "customer_sessions"
+
+    id = Column(String, primary_key=True, default=generate_uuid, index=True)
+    store_id = Column(String, ForeignKey("stores.id"), nullable=False)
+    customer_photo_url = Column(String, nullable=True)
+    session_started_at = Column(DateTime(timezone=True), default=func.now())
+    session_ended_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String, default="active")  # active, completed, abandoned
+    total_tryons = Column(Integer, default=0)
+    selected_sarees_count = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    store = relationship("Store")
+    selections = relationship("SessionSelection", back_populates="session", cascade="all, delete-orphan")
+
+class SessionSelection(Base):
+    __tablename__ = "session_selections"
+
+    id = Column(String, primary_key=True, default=generate_uuid, index=True)
+    session_id = Column(String, ForeignKey("customer_sessions.id"), nullable=False)
+    saree_id = Column(String, ForeignKey("sarees.id"), nullable=False)
+    tryon_result_url = Column(String, nullable=True)
+    is_favorited = Column(Boolean, default=False)
+    tried_at = Column(DateTime(timezone=True), default=func.now())
+
+    session = relationship("CustomerSession", back_populates="selections")
+    saree = relationship("Saree")

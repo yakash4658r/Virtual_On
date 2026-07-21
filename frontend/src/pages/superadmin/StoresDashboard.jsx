@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import superadminAPI from '../../api/superadminAPI'
-import { FiShoppingBag, FiEdit2, FiXCircle, FiPlus, FiSearch } from 'react-icons/fi'
+import { FiShoppingBag, FiEdit2, FiXCircle, FiCheckCircle, FiPlus, FiSearch, FiDollarSign } from 'react-icons/fi'
 import '../../layouts/SuperAdminLayout.css'
 import toast from 'react-hot-toast'
 
@@ -9,6 +9,7 @@ function StoresDashboard() {
   const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [topUpModal, setTopUpModal] = useState({ open: false, storeId: null, storeName: '', amount: 100 })
 
   useEffect(() => {
     loadStores()
@@ -25,21 +26,34 @@ function StoresDashboard() {
     }
   }
 
-  const handleDeactivate = async (storeId, storeName) => {
-    if (!window.confirm(`Deactivate "${storeName}"? This will disable the store.`)) return
+  const handleDeactivate = async (storeId, storeName, currentStatus) => {
+    const action = currentStatus ? 'Deactivate' : 'Reactivate'
+    if (!window.confirm(`${action} "${storeName}"?`)) return
     try {
-      await superadminAPI.deactivateStore(storeId)
-      toast.success(`${storeName} deactivated`)
+      await superadminAPI.updateStore(storeId, { is_active: !currentStatus })
+      toast.success(`${storeName} ${currentStatus ? 'deactivated' : 'reactivated'}`)
       loadStores()
     } catch (err) {
-      toast.error('Failed to deactivate store')
+      toast.error(`Failed to ${action.toLowerCase()} store`)
+    }
+  }
+
+  const handleTopUpSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await superadminAPI.addCredits(topUpModal.storeId, topUpModal.amount)
+      toast.success(`Added ${topUpModal.amount} credits to ${topUpModal.storeName}`)
+      setTopUpModal({ open: false, storeId: null, storeName: '', amount: 100 })
+      loadStores()
+    } catch (err) {
+      toast.error('Failed to add credits')
     }
   }
 
   const filtered = stores.filter(
     (s) =>
       s.store_name.toLowerCase().includes(search.toLowerCase()) ||
-      s.store_code.toLowerCase().includes(search.toLowerCase())
+      s.activation_code.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -140,18 +154,18 @@ function StoresDashboard() {
                   </td>
                   <td>
                     <code style={{ background: 'rgba(124,58,237,0.1)', padding: '3px 8px', borderRadius: '4px', color: '#a78bfa' }}>
-                      {store.store_code}
+                      {store.activation_code}
                     </code>
                   </td>
                   <td>
-                    <span className={`sa-badge ${store.subscription_plan}`}>
-                      {store.subscription_plan}
+                    <span className={`sa-badge ${store.plan_type}`}>
+                      {store.plan_type}
                     </span>
                   </td>
-                  <td>{store.saree_count}</td>
-                  <td>{store.device_count}</td>
-                  <td>{store.tryon_count}</td>
-                  <td>{store.ai_credits_remaining}</td>
+                  <td>{store.saree_count || 0}</td>
+                  <td>{store.device_count || 0}</td>
+                  <td>{store.tryon_count || 0}</td>
+                  <td>{store.credits_remaining}</td>
                   <td>
                     <span className={`sa-badge ${store.is_active ? 'active' : 'inactive'}`}>
                       {store.is_active ? 'Active' : 'Inactive'}
@@ -159,16 +173,31 @@ function StoresDashboard() {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="sa-btn outline small" title="Edit">
-                        <FiEdit2 />
+                      <button 
+                        className="sa-btn outline small" 
+                        title="Top Up Credits"
+                        onClick={() => setTopUpModal({ open: true, storeId: store.id, storeName: store.store_name, amount: 100 })}
+                      >
+                        <FiDollarSign />
                       </button>
-                      {store.is_active && (
+                      <Link to={`/superadmin/stores/edit/${store.id}`} className="sa-btn outline small" title="Edit">
+                        <FiEdit2 />
+                      </Link>
+                      {store.is_active ? (
                         <button
                           className="sa-btn danger small"
                           title="Deactivate"
-                          onClick={() => handleDeactivate(store.id, store.store_name)}
+                          onClick={() => handleDeactivate(store.id, store.store_name, store.is_active)}
                         >
                           <FiXCircle />
+                        </button>
+                      ) : (
+                        <button
+                          className="sa-btn primary small"
+                          title="Reactivate"
+                          onClick={() => handleDeactivate(store.id, store.store_name, store.is_active)}
+                        >
+                          <FiCheckCircle />
                         </button>
                       )}
                     </div>
@@ -179,6 +208,34 @@ function StoresDashboard() {
           </table>
         )}
       </div>
+
+      {topUpModal.open && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#1f2937', padding: '24px', borderRadius: '8px', width: '400px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#fff' }}>Top Up Credits for {topUpModal.storeName}</h3>
+            <form onSubmit={handleTopUpSubmit}>
+              <div className="sa-form-group">
+                <label className="sa-form-label">Amount to Add</label>
+                <input
+                  type="number"
+                  className="sa-form-input"
+                  min="1"
+                  value={topUpModal.amount}
+                  onChange={(e) => setTopUpModal(prev => ({ ...prev, amount: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+                <button type="button" className="sa-btn outline" onClick={() => setTopUpModal({ open: false, storeId: null, storeName: '', amount: 100 })}>
+                  Cancel
+                </button>
+                <button type="submit" className="sa-btn primary">
+                  Add Credits
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

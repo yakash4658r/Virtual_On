@@ -31,7 +31,7 @@ const productAPI = {
 
   // Admin — create saree with images
   adminCreate: (formData) => {
-    return axiosInstance.post('/products/admin/create/', formData, {
+    return axiosInstance.post('/products/admin/create', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },

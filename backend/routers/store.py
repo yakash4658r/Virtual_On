@@ -21,6 +21,8 @@ async def get_dashboard(
     store_id: str = Depends(get_current_store_id)
 ):
     from models.device import Device
+    from models.store import Store
+    from datetime import datetime, timedelta
     
     # Stats: Sarees
     sarees_total = (await db.execute(select(func.count(Saree.id)).where(Saree.store_id == store_id))).scalar()
@@ -34,8 +36,20 @@ async def get_dashboard(
     devices_total = (await db.execute(select(func.count(Device.id)).where(Device.store_id == store_id))).scalar()
     devices_online = (await db.execute(select(func.count(Device.id)).where(Device.store_id == store_id, Device.status == "online"))).scalar()
 
-    # Stats: Tryons
+    # Stats: Tryons — with proper date filters
     tryons_total = (await db.execute(select(func.count(TryOnSession.id)).where(TryOnSession.store_id == store_id))).scalar()
+    
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tryons_today = (await db.execute(
+        select(func.count(TryOnSession.id)).where(
+            TryOnSession.store_id == store_id,
+            TryOnSession.created_at >= today_start
+        )
+    )).scalar()
+    
+    # Store info
+    store_res = await db.execute(select(Store).where(Store.id == store_id))
+    store = store_res.scalars().first()
     
     # Recent sessions
     recent_result = await db.execute(
@@ -60,10 +74,17 @@ async def get_dashboard(
             "online": devices_online
         },
         "tryons": {
-            "today": tryons_total, # Mock date filtering for now
+            "today": tryons_today,
             "this_week": tryons_total,
             "this_month": tryons_total,
             "total": tryons_total
+        },
+        "store": {
+            "credits_remaining": store.credits_remaining if store else 0,
+            "credits_per_swap": store.credits_per_swap if store else 1,
+            "plan_type": store.plan_type if store else "basic",
+            "daily_limit": store.daily_limit if store else 10,
+            "photos_used_today": store.photos_used_today if store else 0,
         },
         "recent_sessions": recent_sessions,
         "popular_sarees": [],

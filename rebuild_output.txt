@@ -1,0 +1,54 @@
+STDOUT:
+Sending build context to Docker daemon  3.514MB
+Step 1/15 : FROM node:20-alpine AS builder
+ ---> fb4cd12c85ee
+Step 2/15 : WORKDIR /app
+ ---> Using cache
+ ---> aeae50e62012
+Step 3/15 : COPY package*.json ./
+ ---> Using cache
+ ---> 7201875906a0
+Step 4/15 : RUN npm ci
+ ---> Using cache
+ ---> 3c5434936441
+Step 5/15 : COPY . .
+ ---> Using cache
+ ---> 39cba1721dd2
+Step 6/15 : ARG VITE_API_URL
+ ---> Using cache
+ ---> d53752cc9957
+Step 7/15 : ENV VITE_API_URL=$VITE_API_URL
+ ---> Using cache
+ ---> cfdd0f6b9543
+Step 8/15 : ARG VITE_GOOGLE_CLIENT_ID
+ ---> Using cache
+ ---> ad2d4b4e6d4e
+Step 9/15 : ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+ ---> Using cache
+ ---> 030bd26ea680
+Step 10/15 : RUN npm run build
+ ---> Running in a2cf70420e86
+
+> saree-virtual-tryon-frontend@0.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 85 modules transformed.
+[91mx Build failed in 904ms
+[0m[91merror during build:
+Could not resolve "../../api/sessionAPI" from "src/pages/admin/SessionGalleryPage.jsx"
+file: /app/src/pages/admin/SessionGalleryPage.jsx
+    at getRollupError (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:317:41)
+    at error (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:313:42)
+    at ModuleLoader.handleInvalidResolvedId (file:///app/node_modules/rollup/dist/es/shared/node-entry.js:22167:24)
+    at file:///app/node_modules/rollup/dist/es/shared/node-entry.js:22127:26
+[0m
+STDERR:
+Building frontend
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+The command '/bin/sh -c npm run build' returned a non-zero code: 1
+Service 'frontend' failed to build : Build failed

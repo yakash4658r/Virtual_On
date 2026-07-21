@@ -1,8 +1,8 @@
 import axiosInstance from './axiosInstance'
 
 const authAPI = {
-  mirrorLogin: (mirrorId) => {
-    return axiosInstance.post('/auth/mirror-login', { mirror_id: mirrorId })
+  login: (id) => {
+    return axiosInstance.post('/auth/login', { id: id })
   },
 
   logout: (refreshToken) => {
@@ -14,10 +14,6 @@ const authAPI = {
   getProfile: () => {
     return axiosInstance.get('/auth/profile')
   },
-
-  updateProfile: (data) => {
-    return axiosInstance.put('/auth/profile', data)
-  }
 }
 
 export default authAPI
